@@ -47,4 +47,27 @@ namespace List
   shape (x :: xs) (y :: ys) = B
 
 
+  namespace Lookup
+
+    Uninhabited (v : value ** Elem (k,v) Lin) where
+      uninhabited (_ ** Here) impossible
+
+
+    export
+    lookup : DecEq key
+          => (k : key)
+          -> (store : SnocList (key,value))
+                   -> Dec (v : value ** Elem (k,v) store)
+    lookup k [<]
+      = No absurd
+    lookup k (sx :< (k',v)) with (decEq k k')
+      lookup k (sx :< (k,v)) | (Yes Refl)
+        = Yes (v ** Here)
+      lookup k (sx :< (k',v)) | (No no) with (lookup k sx)
+        lookup k (sx :< (k',v)) | (No no) | (Yes (v' ** idx))
+          = Yes (v' ** There idx)
+        lookup k (sx :< (k',v)) | (No no) | (No contra)
+          = No (\case (v ** Here) => no Refl
+                      (fst ** (There x)) => contra (fst ** x))
+
 -- [ EOF ]
