@@ -1,0 +1,23 @@
+package sessions
+
+modules = Extra
+
+        , Sessions.Types.Base
+        , Sessions.Types.Common
+
+        , Sessions.Types.Local
+        , Sessions.Types.Local.Difference
+        , Sessions.Types.Local.Subset
+        , Sessions.Types.Local.Merge.Branch
+        , Sessions.Types.Local.Merge.Synthesis
+        , Sessions.Types.Local.Merge.Projection
+
+        -- Experiments
+        --        , Sessions.Types.Local.Merge.Experimental
+        --        , Sessions.Types.Local.Merge.General
+
+
+
+
+        , Sessions.AST
+        , Sessions.Elab
