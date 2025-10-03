@@ -14,10 +14,10 @@ mutual
         True : Expr ts True BOOL
         False : Expr ts False BOOL
         N : Expr ts (N n) NAT
-        V : Elem (v,b) ts
+        V : Lookup.Elem (v,b) ts
          -> Expr ts (V v) b
         The : Check.Expr ts ty tm
-           -> Expr ts (The ty tm) b
+           -> Expr ts (The ty tm) ty
     namespace Check
 
       public export
@@ -27,14 +27,32 @@ mutual
                 -> (prf : tyA = tyB)
                 -> Expr ts tyB (Switch tm)
 
+namespace Synth
+  export
+  unique : (tA : Synth.Expr ctxt term a)
+        -> (tB : Synth.Expr ctxt term b)
+              -> Equal a b
+  unique True True = Refl
+  unique False False = Refl
+  unique N N = Refl
+  unique (V x) (V y) = Lookup.unique x y
+  unique (The x) (The y) = Refl
+
 namespace Expr
-  unbound : ((v : Base ** Elem (str, v) ts) -> Void) -> DPair Base (Expr ts (V str)) -> Void
+  unbound : ((v : Base ** Lookup.Elem (str, v) ts) -> Void) -> DPair Base (Expr ts (V str)) -> Void
   unbound f (fst ** (V x)) = f (fst ** x)
 
   export
   synth : (ts  : SnocList (String,Base))
        -> (ast : Synth.Expr)
               -> Dec (DPair Base (Expr ts ast))
+
+  switchFails : (tm   : Synth.Expr ts term a)
+             -> (no   : Equal a b -> Void)
+             -> (this : Check.Expr ts b (Switch term))
+                     -> Void
+  switchFails tm no (Switch this Refl) with (Synth.unique tm this)
+    switchFails tm no (Switch this Refl) | Refl = no Refl
 
   export
   check : (ts  : SnocList (String,Base))
@@ -46,7 +64,7 @@ namespace Expr
       check ts ty (Switch x) | (Yes (ty ** prf)) | (Yes Refl)
         = Yes (Switch prf Refl)
       check ts ty (Switch x) | (Yes (tyG ** prf)) | (No no)
-        = No (\case (Switch y Refl) => ?exprCheckTyTy)
+        = No (switchFails prf no)
 
     check ts ty (Switch x) | (No no)
       = No (\case (Switch y Refl) => no (ty ** y))
@@ -60,7 +78,7 @@ namespace Expr
     synth ts (The b tm) | (No contra)
       = No (\case (fst ** (The x)) => contra x)
 
-  synth ts (V str) with (lookup str ts)
+  synth ts (V str) with (lookup ts str)
     synth ts (V str) | (Yes (ty ** idx)) = Yes (ty ** V idx)
     synth ts (V str) | (No no)
         = No (unbound no)
@@ -167,7 +185,6 @@ namespace Synth
       synth rs fs (Comm cty r bs) | (No no)
         = No (\case (Comm cty idx tys ** Comm idx x) => no idx)
 
-
 mutual
   namespace Branches
     public export
@@ -271,6 +288,13 @@ namespace Branches
       = No (\case ((B l b ty :: tys) ** (Ext x y)) => no (ty ** x))
 
 
+checkFails : Local rs fs    type' type
+          -> (Check rs fs ts type tm -> Void)
+          -> DPair (Local rs fs)
+                   (Synth rs fs ts (The type' tm))
+          -> Void
+checkFails x f (fst ** (The fst y z)) = f ?as -- (rewrite sym (Local.unique x ?a) in z)
+
 synth rs fs ts Stop
   = Yes (Stop ** Stop)
 
@@ -329,7 +353,8 @@ synth rs fs ts (The tytm tm) with (synth rs fs tytm)
       = Yes (ty ** The ty pTT tm')
 
     synth rs fs ts (The tytm tm) | (Yes (ty ** pTT)) | (No no)
-      = No (\case (ty ** (The ty x y)) => no ?theTyTy)
+      = No (checkFails pTT no)
+      --(\case (ty ** (The ty x y)) => no ?theTyTy)
 
   synth rs fs ts (The tytm tm) | (No no)
     = No (\case (fst ** (The fst x y)) => no (fst ** x))
@@ -358,23 +383,4 @@ namespace Session
 
 
 
-
-
-{-mutual
-  namespace Synth
-
-    public export
-    data AST = Stop
-             | Call String
-             | Loop String Synth.AST
-             | Send String Base String Synth.AST
-             | Recv String (List (String, Base, Synth.AST))
-             | If Expr Synth.AST Synth.AST
-             | The Local Synth.AST
-
-  namespace Check
-
-    public export
-    data AST = Session Local Synth.AST
-             | Switch Synth.AST
--}
+-- [ EOF ]
