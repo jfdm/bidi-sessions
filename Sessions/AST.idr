@@ -4,10 +4,17 @@ import Sessions.Types.Base
 import Sessions.Types.Common
 
 mutual
-  namespace Synth
+  namespace Expr
+    namespace Synth
+      public export
+      data Expr = True | False | N Nat | V String | The Base Check.Expr
 
-    public export
-    data Expr = True | False | N Nat | V String
+    namespace Check
+      public export
+      data Expr = Switch Synth.Expr
+
+mutual
+  namespace Synth
 
     namespace Type
       public export
@@ -22,8 +29,8 @@ mutual
              | Loop String Synth.AST
              | Send String String Base Synth.AST
              | Recv String (List (String, String, Base, Synth.AST))
-             | If Expr Synth.AST Synth.AST
-             | The Local Synth.AST
+             | If Check.Expr Synth.AST Synth.AST
+             | The Local Check.AST
 
   namespace Check
 

@@ -26,99 +26,23 @@ data Merge : (x,y,z : Local rs fs)
        -> Merge (Rec f kx) (Rec f ky)
                 (Rec f kz)
 
-    Send : (sx = sy)
-        -> Send.Merge Merge kx ky kz
-        -> Merge (Comm SEND sx kx)
-                 (Comm SEND sy ky)
-                 (Comm SEND sx kz)
+--    Send : (sx = sy)
+--        -> Send.Merge Merge kx ky kz
+--        -> Merge (Comm SEND sx kx)
+--                 (Comm SEND sy ky)
+--                 (Comm SEND sx kz)
+--
+--
+--    Recv : {zs : List $ Branch rs fs}
+--        -> (sx = sy)
+--        -> Diff kx ky xs
+--        -> Diff ky kx ys
+--        -> Recv.Merge Merge kx ky zs
+--        -> Merge (Comm RECV sx kx)
+--                 (Comm RECV sy ky)
+--                 (Comm RECV sx (xs ++ zs ++ ys))
 
 
-    Recv : {zs : List $ Branch rs fs}
-        -> (sx = sy)
-        -> Diff kx ky xs
-        -> Diff ky kx ys
-        -> Recv.Merge Merge kx ky zs
-        -> Merge (Comm RECV sx kx)
-                 (Comm RECV sy ky)
-                 (Comm RECV sx (xs ++ zs ++ ys))
-
-
-namespace Send
-
-  Uninhabited (Send.Merge Merge [] (x :: xs) zs) where
-    uninhabited End impossible
-    uninhabited (Head y z) impossible
-
-
-  Uninhabited  (DPair (List (Branch rs fs)) (Send.Merge Merge [] (x :: xs))) where
-    uninhabited (fst ** snd) = absurd snd
-
-  Uninhabited (Send.Merge Merge (x :: xs) [] zs) where
-    uninhabited End impossible
-    uninhabited (Head y z) impossible
-
-
-  Uninhabited  (DPair (List (Branch rs fs)) (Send.Merge Merge (x :: xs) [])) where
-    uninhabited (fst ** snd) = absurd snd
-
-
-  export
-  merge : (f : (a,b : Local rs fs) -> Dec (DPair (Local rs fs)
-                                                 (Merge a b)))
-       -> (xs : List (Branch rs fs))
-       -> (ys : List (Branch rs fs))
-             -> Dec (DPair (List (Branch rs fs))
-                           (Send.Merge Merge xs ys))
-  merge f [] []
-    = Yes ([] ** End)
-  merge f [] (x :: xs)
-    = No absurd
-  merge f (x :: xs) []
-    = No absurd
-
-  merge f (x :: xs) (y :: ys) with (merge f x y)
-    merge f (x :: xs) (y :: ys) | (Yes (z ** prf)) with (merge f xs ys)
-      merge f (x :: xs) (y :: ys) | (Yes (z ** prf)) | (Yes (zs ** prfT))
-        = Yes (z :: zs ** Head prf prfT)
-
-      merge f (x :: xs) (y :: ys) | (Yes (z ** prf)) | (No no)
-        = No (\case ((z :: zs) ** (Head pH pT)) => no (zs ** pT))
-
-    merge f (x :: xs) (y :: ys) | (No no)
-      = No (\case ((z :: zs) ** (Head pH pT)) => no (z ** pH))
-
-namespace Recv
-  export
-  merge : (f : (a,b : Local rs fs) -> Dec (DPair (Local rs fs)
-                                                 (Merge a b)))
-       -> (xs : List (Branch rs fs))
-       -> (ys : List (Branch rs fs))
-             -> Dec (DPair (List (Branch rs fs))
-                           (Recv.Merge Merge xs ys))
-  merge f [] ys
-    = Yes ([] ** End)
-
-  merge f (x :: xs) ys with (merge f x ys)
-    merge f (x :: xs) ys | (Yes (z ** pX)) with (Recv.merge f xs ys)
-      merge f (x :: xs) ys | (Yes (z ** pX)) | (Yes (zs ** pXS))
-        = Yes (z :: zs ** Head pX pXS)
-
-      merge f (x :: xs) ys | (Yes (z ** pX)) | (No contra)
-        = No (\case ((z :: zs) ** (Head y w)) => contra (zs ** w)
-                    (zs ** (Skip d y)) => contra (zs ** y))
-
-    merge f (x :: xs) ys | (No noMerge) with (diff x ys)
-      merge f (x :: xs) ys | (No noMerge) | (Yes prfDiff) with (Recv.merge f xs ys)
-        merge f (x :: xs) ys | (No noMerge) | (Yes prfDiff) | (Yes (zs ** prf))
-          = Yes (zs ** Skip prfDiff prf)
-
-        merge f (x :: xs) ys | (No noMerge) | (Yes prfDiff) | (No noLtr)
-          = No (\case ((z :: zs) ** (Head pH pltr)) => noLtr (zs ** pltr)
-                      (fst ** (Skip y z)) => noLtr (fst ** z))
-
-      merge f (x :: xs) ys | (No noMerge) | (No contra)
-        = No (\case ((z :: zs) ** (Head pH pL)) => noMerge (z ** pH)
-                    (fst ** (Skip y z)) => contra y)
 
 mergeSC : DPair (Local rs fs) (Merge Stop (Call x)) -> Void
 mergeSC (_ ** _) impossible
@@ -162,7 +86,7 @@ mergeMSR (_ ** _) impossible
 
 mergeMRS: DPair (Local rs fs) (Merge (Comm RECV w idx) (Comm SEND v ix)) -> Void
 mergeMRS (_ ** _) impossible
-
+{--
 
 export
 merge : (x,y : Local rs fs) -> Dec (DPair (Local rs fs) (Merge x y))
@@ -229,6 +153,6 @@ merge (Comm cx rx xs) (Comm cy ry ys) with (decEq cx cy)
     = No mergeMRS
   merge (Comm RECV rx xs) (Comm RECV ry ys) | (No no)
     = No (\case (Comm RECV _ _ ** Recv Refl _ _ _) => no Refl)
-
+--}
 
 -- [ EOF ]
