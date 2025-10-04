@@ -97,7 +97,7 @@ data Subset : (x,y : Local rs fs)
 
   where
     Stop : Subset Stop Stop
-    Call : (idxx = idxy)
+    Call : Equal idxx idxy
         -> Subset (Call idxx)
                   (Call idxy)
     Rec : Subset kx ky
@@ -164,8 +164,8 @@ subset (Call _) Stop
   = No subsetCS
 
 subset (Call x) (Call y) with (decEq x y)
-  subset (Call x) (Call x) | (Yes Refl)
-    = Yes (Call Refl)
+  subset (Call x) (Call y) | (Yes prf)
+    = Yes (Call prf)
   subset (Call x) (Call y) | (No no)
     = No (\case (Call prf) => no prf)
 

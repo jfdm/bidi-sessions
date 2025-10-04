@@ -20,4 +20,6 @@ modules = Extra
 
 
         , Sessions.AST
+        , Sessions.Elab.Expr
+        , Sessions.Elab.Local
         , Sessions.Elab

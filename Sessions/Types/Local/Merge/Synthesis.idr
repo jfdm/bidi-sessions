@@ -18,7 +18,7 @@ data Merge : (x,y,z : Local rs fs)
 
   where
     Stop : Merge Stop Stop Stop
-    Call : (idxx = idxy)
+    Call : Equal idxx idxy
         -> Merge (Call idxx)
                  (Call idxy)
                  (Call idxx)
@@ -94,10 +94,10 @@ merge Stop (Comm x y xs) = No mergeSM
 
 merge (Call x) Stop = No mergeCS
 merge (Call x) (Call y) with (decEq x y)
-  merge (Call x) (Call x) | (Yes Refl)
-    = Yes (Call x ** Call Refl)
+  merge (Call x) (Call y) | (Yes prf)
+    = Yes (Call x ** Call prf)
   merge (Call x) (Call y) | (No contra)
-    = No (\case (Call fst ** Call Refl) => contra Refl)
+    = No (\case (Call fst ** Call prf) => contra prf)
 
 merge (Call x) (Rec f y) = No mergeCR
 merge (Call x) (Comm y z xs) = No mergeCM

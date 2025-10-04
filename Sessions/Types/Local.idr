@@ -5,6 +5,8 @@ import public Decidable.Equality
 import public Data.SnocList
 import public Data.SnocList.Elem
 
+import public Extra
+
 import public Sessions.Types.Base
 import public Sessions.Types.Common
 
@@ -23,13 +25,14 @@ mutual
             -> Type
     where
       Stop : Local rs fs
-      Call : Elem   f fs
+      Call : {n : Nat}
+          -> AtIndex (MkFix s) fs n
           -> Local rs fs
-      Rec : (f : Fix)
-         -> Local rs (fs :< f)
+      Rec : (s : String)
+         -> Local rs (fs :< (MkFix s))
          -> Local rs fs
       Comm : CTy
-          -> Elem r rs
+          -> Elem.Elem r rs
           -> List (Branch rs fs)
           -> Local rs fs
 
