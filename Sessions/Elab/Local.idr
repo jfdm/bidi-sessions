@@ -115,9 +115,17 @@ namespace Synth
     uniques x y = ?uniques_rhs
 
     export
-    unique : Local rs fs tm a
+    unique : (fs : SnocList Fix)
+          -> {a,b : Local rs fs}
+          -> Local rs fs tm a
           -> Local rs fs tm b
           -> a === b
-    unique x y = ?unique_rhs
+    unique {tm} fs x y with (x)
+      unique {tm = End} fs x End | End = Refl
+      unique {tm = (Call f)} fs x (Call y) | (Call idx) = ?unique_rhs_rhs_2
+      unique {tm = (Rec f kast)} fs x (Rec y) | (Rec z) with (unique (fs :< MkFix f) z y)
+        unique {tm = (Rec f kast)} fs x (Rec y) | (Rec z) | Refl = Refl
+
+      unique {tm = (Comm cty r tms)} fs x (Comm y w) | (Comm idx z) = ?unique_rhs_rhs_4
 
 -- [ EOF ]
