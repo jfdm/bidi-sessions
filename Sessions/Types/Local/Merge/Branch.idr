@@ -20,7 +20,6 @@ data Merge : (how : (a,b,c : Local rs fs) -> Type) -> (x,y,z : Branch rs fs) -> 
             (B ly ty ky)
             (B lx tx kz)
 
-
 public export
 merge : (f   : (a,b : Local rs fs) -> Dec $ DPair (Local rs fs) (how a b))
      -> (x,y : Branch rs fs)
@@ -54,14 +53,14 @@ namespace Branches
       Here : Merge how x   y      z
           -> Merge how x (y::ys) z
 
-      Next : (Merge how x y c -> Void)
-          -> Merge how x     ys  z
+      Next : (forall z . Branch.Merge how x y z -> Void)
+          -> Branches.Merge how x     ys  z
           -> Merge how x (y::ys) z
 
 namespace Branches
   isEmpty : DPair (Branch rs fs) (Merge how x []) -> Void
   isEmpty (_ ** Here y) impossible
-  isEmpty (_ ** Next f y) impossible
+--  isEmpty (_ ** Next f y) impossible
 
   export
   merge : (f : (a,b : Local rs fs) -> Dec (DPair (Local rs fs)
@@ -153,7 +152,8 @@ namespace Sparse
         -> Sparse.Union how xs ys zs
         -> Sparse.Union how (x::xs) ys (z::zs)
 
-    Skip : Diff x ys
+    Skip : (DPair (Branch rs fs) (Merge how x ys) -> Void)
+        -> Diff x ys
         -> Sparse.Union how xs ys zs
         -> Sparse.Union how (x::xs) ys zs
 
@@ -174,20 +174,20 @@ namespace Sparse
 
       union f (x :: xs) ys | (Yes (z ** pX)) | (No contra)
         = No (\case ((z :: zs) ** (Head y w)) => contra (zs ** w)
-                    (zs ** (Skip d y)) => contra (zs ** y))
+                    (zs ** (Skip _ d y)) => contra (zs ** y))
 
     union f (x :: xs) ys | (No noMerge) with (diff x ys)
       union f (x :: xs) ys | (No noMerge) | (Yes prfDiff) with (Sparse.union f xs ys)
         union f (x :: xs) ys | (No noMerge) | (Yes prfDiff) | (Yes (zs ** prf))
-          = Yes (zs ** Skip prfDiff prf)
+          = Yes (zs ** Skip noMerge prfDiff prf)
 
         union f (x :: xs) ys | (No noMerge) | (Yes prfDiff) | (No noLtr)
           = No (\case ((z :: zs) ** (Head pH pltr)) => noLtr (zs ** pltr)
-                      (fst ** (Skip y z)) => noLtr (fst ** z))
+                      (fst ** (Skip noMerge y z)) => noLtr (fst ** z))
 
       union f (x :: xs) ys | (No noMerge) | (No contra)
         = No (\case ((z :: zs) ** (Head pH pL)) => noMerge (z ** pH)
-                    (fst ** (Skip y z)) => contra y)
+                    (fst ** (Skip noMerge y z)) => contra y)
 
 namespace Full
   public export
