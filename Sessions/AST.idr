@@ -41,4 +41,5 @@ mutual
   namespace Session
     public export
     data AST = Session Local Synth.AST
+
 -- [ EOF ]

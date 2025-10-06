@@ -50,7 +50,7 @@ mutual
           -> (bs  : Synth rs fs ts tms tys)
                  -> Synth rs fs ts (Recv n tms) (Comm RECV idx tys)
 
-      If : (l,r : Local rs fs)
+      If : {l,r : _}
         -> (cond : Expr ts BOOL c)
         -> (tt   : Synth rs fs ts ttm l)
         -> (ff   : Synth rs fs ts ffm r)

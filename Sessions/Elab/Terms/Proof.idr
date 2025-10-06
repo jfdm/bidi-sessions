@@ -9,6 +9,7 @@ import Sessions.Elab.Expr
 import Sessions.Elab.Local
 
 import Sessions.Elab.Terms.Core
+import Sessions.Elab.Terms.Unique
 
 namespace Branches
   export
@@ -54,7 +55,15 @@ mergeFails : Synth rs fs ts tt tyL
           -> Synth rs fs ts ff tyR
           -> (DPair (Local rs fs) (Merge tyL tyR) -> Void)
           -> DPair (Local rs fs) (Synth rs fs ts (If c tt ff)) -> Void
-mergeFails px py f (fst ** (If l r cond pl pr prf)) = ?mergeFails_rhs_1
+mergeFails px py f (fst ** (If cond pl pr prf)) with (unique px pl)
+  mergeFails px py f (fst ** (If cond pl pr prf)) | Refl with (unique py pr)
+    mergeFails px py f (fst ** (If cond pl pr prf)) | Refl | Refl = f (fst ** prf)
+
+checkSubsetFails : (no : Subset tySyn ty -> Void)
+                -> Synth rs fs ts tm tySyn
+                -> Check rs fs ts ty (Switch tm) -> Void
+checkSubsetFails no x (Switch y prf) with (unique x y)
+  checkSubsetFails no x (Switch y prf) | Refl = no prf
 
 checkFails : Local rs fs typetm type
           -> (Check rs fs ts type tm -> Void)
@@ -104,17 +113,17 @@ synth rs fs ts (If c tt ff) with (check ts BOOL c)
     synth rs fs ts (If c tt ff) | (Yes cond) | (Yes (tyL ** pL)) with (synth rs fs ts ff)
       synth rs fs ts (If c tt ff) | (Yes cond) | (Yes (tyL ** pL)) | (Yes (tyR ** pR)) with (merge tyL tyR)
         synth rs fs ts (If c tt ff) | (Yes cond) | (Yes (tyL ** pL)) | (Yes (tyR ** pR)) | (Yes (ty ** prf))
-          = Yes (ty ** If tyL tyR cond pL pR prf)
+          = Yes (ty ** If cond pL pR prf)
         synth rs fs ts (If c tt ff) | (Yes cond) | (Yes (tyL ** pL)) | (Yes (tyR ** pR)) | (No no)
           = No (mergeFails pL pR no)
 
       synth rs fs ts (If c tt ff) | (Yes cond) | (Yes (tyL ** pL)) | (No no)
-        = No (\case (fst ** (If _ _ _ y z _)) => no (_ ** z))
+        = No (\case (fst ** (If  _ y z _)) => no (_ ** z))
     synth rs fs ts (If c tt ff) | (Yes cond) | (No no)
-      = No (\case (fst ** (If _ _ x_ y z _)) => no (_ ** y))
+      = No (\case (fst ** (If x_ y z _)) => no (_ ** y))
 
   synth rs fs ts (If c tt ff) | (No no)
-    = No (\case (fst ** (If _ _ cond x y prf)) => no cond)
+    = No (\case (fst ** (If cond x y prf)) => no cond)
 
 synth rs fs ts (The tytm tm) with (synth rs fs tytm)
   synth rs fs ts (The tytm tm) | (Yes (ty ** pTT)) with (check rs fs ts ty tm)
@@ -132,7 +141,7 @@ check rs fs ts ty (Switch tm) with (synth rs fs ts tm)
     check rs fs ts ty (Switch tm) | (Yes (tySyn ** prf)) | (Yes prfS)
       = Yes (Switch prf prfS)
     check rs fs ts ty (Switch tm) | (Yes (tySyn ** prf)) | (No no)
-      = No (\case (Switch x y) => no ?checkSynSubset)
+      = No (checkSubsetFails no prf)
   check rs fs ts ty (Switch tm) | (No no)
     = No (\case (Switch x y) => no (_ ** x))
 

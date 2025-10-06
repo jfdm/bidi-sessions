@@ -28,6 +28,7 @@ namespace Branch
     diff (B lx _ _) (B ly _ _) | (No contra)
       = Yes (D contra)
 
+
 namespace Branches
 
   namespace Branch
@@ -87,5 +88,21 @@ namespace Branches
         = (x :: zs ** Here prfH prfT)
       diff (x :: xs) ys | (No contra) | (zs ** prfT)
         = (zs ** Skip contra prfT)
+
+  export
+  uniques : Diff xs ys as
+         -> Diff xs ys bs
+        -> as === bs
+  uniques EndL EndL
+    = Refl
+  uniques (Here x xs) (Here y ys) with (uniques xs ys)
+    uniques (Here x xs) (Here y ys) | Refl = Refl
+
+  uniques (Here x xs) (Skip f y) = void (absurd $ f x)
+
+  uniques (Skip f x) (Here y ys) = void $ absurd (f y)
+
+  uniques (Skip f x) (Skip g y) with (uniques x y)
+    uniques (Skip f x) (Skip g y) | Refl = Refl
 
 -- [ EOF ]

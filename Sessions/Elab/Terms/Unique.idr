@@ -44,18 +44,12 @@ mutual
         unique (Recv ry xs) (Recv ry ys) | Refl | Refl with (uniques xs ys)
           unique (Recv ry xs) (Recv ry ys) | Refl | Refl | Refl = Refl
 
-    unique (If lx rx cx tx fx px) (If ly ry cy ty fy py) with (unique tx ty)
-      unique (If lx rx cx tx fx px) (If lx ry cy ty fy py) | Refl with (unique fx fy)
-        unique (If lx ry cx tx fx px) (If lx ry cy ty fy py) | Refl | Refl with (unique px py)
-          unique (If lx ry cx tx fx px) (If lx ry cy ty fy py) | Refl | Refl | Refl = Refl
+    unique (If cx tx fx px) (If cy ty fy py) with (unique tx ty)
+      unique (If cx tx fx px) (If cy ty fy py) | Refl with (unique fx fy)
+        unique (If cx tx fx px) (If cy ty fy py) | Refl | Refl with (unique px py)
+          unique (If cx tx fx px) (If cy ty fy py) | Refl | Refl | Refl = Refl
 
     unique (The x px) (The y py) with (Local.unique x y)
       unique (The x px) (The y py) | Refl = Refl
-
-  namespace Check
-    export
-    unique : Check rs fs ts a tm
-          -> Check rs fs ts b tm
-          -> a === b
 
 -- [ EOF ]

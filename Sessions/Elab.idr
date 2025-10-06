@@ -7,13 +7,8 @@ import Sessions.AST
 
 import Sessions.Elab.Expr
 import Sessions.Elab.Local
+import Sessions.Elab.Terms
 
-
-namespace Check
-  export
-  unique : Check rs fs ts a tm
-        -> Check rs fs ts b tm
-        -> a === b
 
 
 namespace Session
@@ -28,6 +23,7 @@ namespace Session
              -> Subset tySyn tyExp
              -> Check rs ts (Session tmty tm)
              -- here we can do projection...
+
 
 
 

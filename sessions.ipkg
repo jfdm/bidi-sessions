@@ -9,6 +9,13 @@ modules = Extra
         , Sessions.Types.Local.Difference
         , Sessions.Types.Local.Subset
         , Sessions.Types.Local.Merge.Branch
+
+        , Sessions.Types.Local.Merge.Branches.Single
+        , Sessions.Types.Local.Merge.Branches.Pairwise
+        , Sessions.Types.Local.Merge.Branches.Sparse
+        , Sessions.Types.Local.Merge.Branches.Full
+        , Sessions.Types.Local.Merge.Branches
+
         , Sessions.Types.Local.Merge.Synthesis
         , Sessions.Types.Local.Merge.Projection
 
@@ -22,4 +29,11 @@ modules = Extra
         , Sessions.AST
         , Sessions.Elab.Expr
         , Sessions.Elab.Local
+
+        , Sessions.Elab.Terms.Core
+        , Sessions.Elab.Terms.Proof
+        , Sessions.Elab.Terms.Unique
+
+        , Sessions.Elab.Terms
+
         , Sessions.Elab

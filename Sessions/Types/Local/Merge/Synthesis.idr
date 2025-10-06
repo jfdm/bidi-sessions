@@ -10,6 +10,7 @@ import public Extra
 import Sessions.Types.Local
 import public Sessions.Types.Local.Difference
 import public Sessions.Types.Local.Merge.Branch
+import public Sessions.Types.Local.Merge.Branches
 
 
 public export
@@ -144,5 +145,21 @@ merge (Comm cx rx xs) (Comm cy ry ys) with (decEq cx cy)
   merge (Comm RECV rx xs) (Comm RECV ry ys) | (No no)
     = No (\case (Comm RECV _ _ ** Recv Refl _) => no Refl)
 
+
+export
+unique : Synthesis.Merge lx ry a
+      -> Synthesis.Merge lx ry b
+      -> a === b
+unique Stop Stop = Refl
+unique (Call x) (Call y) = Refl
+
+unique (Rec x) (Rec y) with (unique x y)
+  unique (Rec x) (Rec y) | Refl = Refl
+
+unique (Send Refl x) (Send Refl y) with (Full.unique unique x y)
+  unique (Send Refl x) (Send Refl y) | Refl = Refl
+
+unique (Recv Refl x) (Recv Refl y) with (unique unique x y)
+  unique (Recv Refl x) (Recv Refl y) | Refl = Refl
 
 -- [ EOF ]

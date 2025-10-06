@@ -1,6 +1,7 @@
 module Example
 
 import Sessions.Types.Local
+import Sessions.Types.Local
 import Sessions.Types.Local.Merge.Synthesis
 import Sessions.Types.Local.Merge.Projection
 

@@ -20,7 +20,7 @@ data Merge : (how : (a,b,c : Local rs fs) -> Type) -> (x,y,z : Branch rs fs) -> 
             (B ly ty ky)
             (B lx tx kz)
 
-public export
+export
 merge : (f   : (a,b : Local rs fs) -> Dec $ DPair (Local rs fs) (how a b))
      -> (x,y : Branch rs fs)
             -> Dec (DPair (Branch rs fs) (Merge how x y))
@@ -40,180 +40,16 @@ merge f (B lx tx kx) (B ly ty ky) with (Equality.decEq lx ly)
   merge f (B lx tx kx) (B ly ty ky) | (No contra)
     = No (\case (B _ _ _ ** B Refl _ _) => contra Refl)
 
-namespace Branches
-  ||| There is an y in ys that results in z
-  public export
-  data Merge : (how : (a,b,c : Local rs fs) -> Type)
-            -> (x  :      (Branch rs fs))
-            -> (ys : List (Branch rs fs))
-            -> (z  :      (Branch rs fs))
-           -> Type
-    where
+export
+unique : {0 how : (a,b,c : Local rs fs) -> Type}
+      -> (f : {0 a,b,c,d : Local rs fs}
+           -> (  this : how a b c)
+           -> (  that : how a b d)
+           -> c === d)
+      -> (this : Merge how x y a)
+      -> (that : Merge how x y b)
+      -> a === b
+unique f (B Refl Refl x) (B Refl Refl y) with (f x y)
+  unique f (B Refl Refl x) (B Refl Refl y) | Refl = Refl
 
-      Here : Merge how x   y      z
-          -> Merge how x (y::ys) z
-
-      Next : (forall z . Branch.Merge how x y z -> Void)
-          -> Branches.Merge how x     ys  z
-          -> Merge how x (y::ys) z
-
-namespace Branches
-  isEmpty : DPair (Branch rs fs) (Merge how x []) -> Void
-  isEmpty (_ ** Here y) impossible
---  isEmpty (_ ** Next f y) impossible
-
-  export
-  merge : (f : (a,b : Local rs fs) -> Dec (DPair (Local rs fs)
-                                                 (how a b)))
-       -> (x  :       Branch rs fs)
-       -> (ys : List (Branch rs fs))
-             -> Dec (DPair (Branch rs fs)
-                           (Merge how x ys))
-  merge f x [] = No isEmpty
-  merge f x (y :: xs) with (merge f x y)
-    merge f x (y :: xs) | (Yes (z ** prf))
-      = Yes (z ** Here prf)
-
-    merge f x (y :: xs) | (No noH) with (merge f x xs)
-      merge f x (y :: xs) | (No noH) | (Yes (z ** ltr))
-        = Yes (z ** Next (\w => noH (z ** w)) ltr)
-      merge f x (y :: xs) | (No noH) | (No noL)
-        = No (\case (z ** (Here pH)) => noH (z ** pH)
-                    (z ** (Next _  pL)) => noL (z ** pL))
-
-
-namespace Pairwise
-
-  public export
-  data Union : (how : (a,b,c : Local rs fs) -> Type)
-            -> (xs : List (Branch rs fs))
-            -> (ys : List (Branch rs fs))
-            -> (zs : List (Branch rs fs))
-            -> Type where
-    End : Union how Nil Nil Nil
-
-    Head : Merge how x y z
-        -> Union how xs ys zs
-        -> Union how (x::xs) (y::ys) (z::zs)
-
-  Uninhabited (Pairwise.Union how [] (x :: xs) zs) where
-    uninhabited End impossible
-    uninhabited (Head y z) impossible
-
-
-  Uninhabited  (DPair (List (Branch rs fs)) (Pairwise.Union how [] (x :: xs))) where
-    uninhabited (fst ** snd) = absurd snd
-
-  Uninhabited (Pairwise.Union how (x :: xs) [] zs) where
-    uninhabited End impossible
-    uninhabited (Head y z) impossible
-
-
-  Uninhabited  (DPair (List (Branch rs fs)) (Pairwise.Union how (x :: xs) [])) where
-    uninhabited (fst ** snd) = absurd snd
-
-
-  export
-  union : (f : (a,b : Local rs fs) -> Dec (DPair (Local rs fs)
-                                                 (how a b)))
-       -> (xs : List (Branch rs fs))
-       -> (ys : List (Branch rs fs))
-             -> Dec (DPair (List (Branch rs fs))
-                           (Pairwise.Union how xs ys))
-  union f [] []
-    = Yes ([] ** End)
-  union f [] (x :: xs)
-    = No absurd
-  union f (x :: xs) []
-    = No absurd
-
-  union f (x :: xs) (y :: ys) with (merge f x y)
-    union f (x :: xs) (y :: ys) | (Yes (z ** prf)) with (union f xs ys)
-      union f (x :: xs) (y :: ys) | (Yes (z ** prf)) | (Yes (zs ** prfT))
-        = Yes (z :: zs ** Head prf prfT)
-
-      union f (x :: xs) (y :: ys) | (Yes (z ** prf)) | (No no)
-        = No (\case ((z :: zs) ** (Head pH pT)) => no (zs ** pT))
-
-    union f (x :: xs) (y :: ys) | (No no)
-      = No (\case ((z :: zs) ** (Head pH pT)) => no (z ** pH))
-
-namespace Sparse
-
-  public export
-  data Union : (how : (a,b,c : Local rs fs) -> Type)
-            -> (xs : List (Branch rs fs))
-            -> (ys : List (Branch rs fs))
-            -> (zs : List (Branch rs fs))
-            -> Type where
-    End : Union how Nil ys Nil
-
-    Head : Merge how x ys z
-        -> Sparse.Union how xs ys zs
-        -> Sparse.Union how (x::xs) ys (z::zs)
-
-    Skip : (DPair (Branch rs fs) (Merge how x ys) -> Void)
-        -> Diff x ys
-        -> Sparse.Union how xs ys zs
-        -> Sparse.Union how (x::xs) ys zs
-
-  export
-  union : (f : (a,b : Local rs fs) -> Dec (DPair (Local rs fs)
-                                                 (how a b)))
-       -> (xs : List (Branch rs fs))
-       -> (ys : List (Branch rs fs))
-             -> Dec (DPair (List (Branch rs fs))
-                           (Sparse.Union how xs ys))
-  union f [] ys
-    = Yes ([] ** End)
-
-  union f (x :: xs) ys with (merge f x ys)
-    union f (x :: xs) ys | (Yes (z ** pX)) with (Sparse.union f xs ys)
-      union f (x :: xs) ys | (Yes (z ** pX)) | (Yes (zs ** pXS))
-        = Yes (z :: zs ** Head pX pXS)
-
-      union f (x :: xs) ys | (Yes (z ** pX)) | (No contra)
-        = No (\case ((z :: zs) ** (Head y w)) => contra (zs ** w)
-                    (zs ** (Skip _ d y)) => contra (zs ** y))
-
-    union f (x :: xs) ys | (No noMerge) with (diff x ys)
-      union f (x :: xs) ys | (No noMerge) | (Yes prfDiff) with (Sparse.union f xs ys)
-        union f (x :: xs) ys | (No noMerge) | (Yes prfDiff) | (Yes (zs ** prf))
-          = Yes (zs ** Skip noMerge prfDiff prf)
-
-        union f (x :: xs) ys | (No noMerge) | (Yes prfDiff) | (No noLtr)
-          = No (\case ((z :: zs) ** (Head pH pltr)) => noLtr (zs ** pltr)
-                      (fst ** (Skip noMerge y z)) => noLtr (fst ** z))
-
-      union f (x :: xs) ys | (No noMerge) | (No contra)
-        = No (\case ((z :: zs) ** (Head pH pL)) => noMerge (z ** pH)
-                    (fst ** (Skip noMerge y z)) => contra y)
-
-namespace Full
-  public export
-  data Merge : (how : (a,b,c : Local rs fs) -> Type)
-            -> (xs : List (Branch rs fs))
-            -> (ys : List (Branch rs fs))
-            -> (zs : List (Branch rs fs))
-                  -> Type
-    where
-      Full : {zs : _}
-          -> Diff kx ky xs
-          -> Diff ky kx ys
-          -> Sparse.Union how kx ky zs
-          -> Merge how kx ky (xs ++ ys ++ zs)
-
-  export
-  merge : (f : (a,b : Local rs fs) -> Dec (DPair (Local rs fs)
-                                                   (how a b)))
-         -> (xs : List (Branch rs fs))
-         -> (ys : List (Branch rs fs))
-               -> Dec (DPair (List (Branch rs fs))
-                             (Full.Merge how xs ys))
-  merge f xs ys with (diff xs ys)
-    merge f xs ys | (xys ** pXY) with (diff ys xs)
-      merge f xs ys | (xys ** pXY) | (yxs ** pYX) with (Sparse.union f xs ys)
-        merge f xs ys | (xys ** pXY) | (yxs ** pYX) | (Yes (zs ** pZS))
-          = Yes (xys ++ (yxs ++ zs) ** Full pXY pYX pZS)
-        merge f xs ys | (xys ** pXY) | (yxs ** pYX) | (No no)
-          = No (\case ((xs ++ (ys ++ zs)) ** (Full x y z)) => no (zs ** z))
+-- [ EOF ]
