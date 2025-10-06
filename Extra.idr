@@ -104,6 +104,34 @@ namespace SnocList
       uninhabited H impossible
       uninhabited (T y) impossible
 
+    public export
+    data EqualNot : (a : AtIndex x xs n)
+                 -> (b : AtIndex y xs m)
+                      -> Type
+      where
+        LeftH : EqualNot (T z) (H Refl)
+        RightH : EqualNot  (H Refl) (T z)
+        ThereNot : EqualNot xs ys
+                -> EqualNot (T xs) (T ys)
+
+
+
+    sameIsWrong : EqualNot (H Refl) (H Refl) -> Void
+    sameIsWrong LeftH impossible
+    sameIsWrong RightH impossible
+    sameIsWrong (ThereNot x) impossible
+
+    export
+    decEqNot : (a : AtIndex x xs n)
+            -> (b : AtIndex y xs m)
+                 -> Dec (EqualNot a b)
+    decEqNot (H Refl) (H Refl) = No sameIsWrong
+    decEqNot (H Refl) (T z) = Yes RightH
+    decEqNot (T z) (H Refl) = Yes LeftH
+    decEqNot (T z) (T w) with (decEqNot z w)
+      decEqNot (T z) (T w) | (Yes prf) = Yes (ThereNot prf)
+      decEqNot (T z) (T w) | (No no)
+        = No $ \case (ThereNot v) => no v
 
     export
     index : (xs : SnocList a)
