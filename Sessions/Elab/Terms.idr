@@ -9,4 +9,5 @@ import Sessions.Elab.Expr
 import Sessions.Elab.Local
 
 import public Sessions.Elab.Terms.Core as Sessions.Elab.Terms
+import public Sessions.Elab.Terms.Unique as Sessions.Elab.Terms
 import public Sessions.Elab.Terms.Proof as Sessions.Elab.Terms

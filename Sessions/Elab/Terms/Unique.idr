@@ -34,10 +34,11 @@ mutual
     unique (Loop x) (Loop y) with (unique x y)
       unique (Loop x) (Loop y) | Refl = Refl
 
-    unique (Send rx x) (Send ry y) with (unique rx ry)
-      unique (Send rx x) (Send ry y) | Refl with (unique2 rx ry)
-        unique (Send ry x) (Send ry y) | Refl | Refl with (unique x y)
-          unique (Send ry x) (Send ry y) | Refl | Refl | Refl = Refl
+    unique (Send rx vx x) (Send ry vy y) with (unique rx ry)
+      unique (Send rx vx x) (Send ry vy y) | Refl with (unique vx vy)
+        unique (Send rx vx x) (Send ry vy y) | Refl | Refl with (unique2 rx ry)
+          unique (Send rx vx x) (Send rx vy y) | Refl | Refl | Refl with (unique x y)
+            unique (Send rx vx x) (Send rx vy y) | Refl | Refl | Refl | Refl = Refl
 
     unique (Recv rx xs) (Recv ry ys) with (unique rx ry)
       unique (Recv rx xs) (Recv ry ys) | Refl with (unique2 rx ry)

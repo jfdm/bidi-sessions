@@ -10,6 +10,7 @@ import public Extra
 import Sessions.Types.Local
 import public Sessions.Types.Local.Difference
 import public Sessions.Types.Local.Merge.Branch
+import public Sessions.Types.Local.Merge.Branches
 
 
 public export

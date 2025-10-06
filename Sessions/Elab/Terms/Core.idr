@@ -41,8 +41,9 @@ mutual
 
       Send : {r : _}
           -> (prf  : AtIndex r rs n)
+          -> (pe   : Expr ts v b)
           -> (cont : Synth rs fs ts tm ty)
-                  -> Synth rs fs ts (Send n l b tm)
+                  -> Synth rs fs ts (Send n l v tm)
                                  (Comm SEND prf [B l b ty])
 
       Recv : {r : _}

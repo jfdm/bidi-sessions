@@ -27,7 +27,7 @@ mutual
     data AST = Stop
              | Call Nat
              | Loop Synth.AST
-             | Send Nat String Base Synth.AST
+             | Send Nat String Synth.Expr Synth.AST
              | Recv Nat (List (String, String, Base, Synth.AST))
              | If Check.Expr Synth.AST Synth.AST
              | The Local Check.AST
