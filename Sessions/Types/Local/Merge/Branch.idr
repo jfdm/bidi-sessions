@@ -26,7 +26,7 @@ merge : (f   : (a,b : Local rs fs) -> Dec $ DPair (Local rs fs) (how a b))
      -> (x,y : Branch rs fs)
             -> Dec (DPair (Branch rs fs) (Merge how x y))
 
-merge f (B lx tx kx) (B ly ty ky) with (decEq lx ly)
+merge f (B lx tx kx) (B ly ty ky) with (Equality.decEq lx ly)
   merge f (B lx tx kx) (B lx ty ky) | (Yes Refl) with (decEq tx ty)
     merge f (B lx tx kx) (B lx tx ky) | (Yes Refl) | (Yes Refl) with (f kx ky)
       merge f (B lx tx kx) (B lx tx ky) | (Yes Refl) | (Yes Refl) | (Yes (ty ** prf))

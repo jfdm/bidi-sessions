@@ -1,5 +1,8 @@
 module Sessions.Elab.Local
 
+import Extra
+
+import Sessions.Types.Common
 import Sessions.Types.Local
 import Sessions.Types.Local.Subset
 import Sessions.Types.Local.Merge.Synthesis
@@ -10,19 +13,19 @@ namespace Synth
     namespace Branches
       public export
       data Local : (how : (rs : SnocList Role)
-                       -> (fs : SnocList Fix)
+                       -> (fs : Fix.Context)
                        -> (tm : Local)
                        -> (ty : Local rs fs)
                              -> Type)
                 -> (rs  : SnocList Role)
-                -> (fs  : SnocList Fix)
+                -> (fs  : Fix.Context)
                 -> (tms : List (String, Base, Local))
                 -> (tys : List (Branch rs fs))
                        -> Type
         where
           End : Local how rs fs Nil Nil
           Ext : {0 how : (rs : SnocList Role)
-                      -> (fs : SnocList Fix)
+                      -> (fs : Fix.Context)
                       -> (tm : Local)
                       -> (ty : Local rs fs)
                             -> Type}
@@ -32,16 +35,16 @@ namespace Synth
 
       export
       synth : {0 how : (rs : SnocList Role)
-                    -> (fs : SnocList Fix)
+                    -> (fs : Fix.Context)
                     -> (tm : Local)
                     -> (ty : Local rs fs)
                           -> Type}
            -> (f : (rs : SnocList Role)
-                -> (fs : SnocList Fix)
+                -> (fs : Fix.Context)
                 -> (tm : Local)
                       -> Dec (DPair (Local rs fs) (how rs fs tm)))
            -> (rs  : SnocList Role)
-           -> (fs  : SnocList Fix)
+           -> (fs  : Fix.Context)
            -> (tms : List (String, Base, Local))
                   -> Dec (DPair (List (Branch rs fs))
                                 (Branches.Local how rs fs tms))
@@ -58,74 +61,87 @@ namespace Synth
         synth f rs fs ((l,b,x) :: xs) | (No noH)
           = No (\case ((B l b kty :: tys) ** (Ext head next)) => noH (kty ** head))
 
+namespace Synth
+  namespace Local
+
     public export
     data Local : (rs : SnocList Role)
-              -> (fs : SnocList Fix)
+              -> (fs : Fix.Context)
               -> (tm : Local)
               -> (ty : Local rs fs)
                     -> Type
       where
         End : Local rs fs End Stop
-        Call : (idx : AtIndex (MkFix f) fs n)
-                   -> Local rs fs (Call f) (Call idx)
+        Call : (n : Nat)
+            -> (idx : AtIndex MkFix fs n)
+                   -> Local rs fs (Call n) (Call idx)
 
-        Rec : Local rs (fs :< (MkFix f)) kast kty
-           -> Local rs fs (Rec f kast) (Rec f kty)
+        Rec : Local rs (fs :< MkFix) kast kty
+           -> Local rs fs (Rec kast) (Rec kty)
 
-        Comm : (idx : Elem (MkRole r) rs)
+        Comm : {r : _}
+            -> (n : Nat)
+            -> (idx : AtIndex r rs n)
             -> Local Local rs fs tms tys
-            -> Local rs fs (Comm cty r tms) (Comm cty idx tys)
+            -> Local rs fs (Comm cty n tms) (Comm cty idx tys)
 
     export
     synth : (rs : SnocList Role)
-         -> (fs : SnocList Fix)
+         -> (fs : Fix.Context)
          -> (tm : Local)
                -> Dec (DPair (Local rs fs)
                              (Local rs fs tm))
     synth rs fs End
       = Yes (Stop ** End)
 
-    synth rs fs (Call str) with (lookup fs (MkFix str))
-      synth rs fs (Call str) | (Yes (n ** prf))
-        = Yes (Call prf ** Call prf)
+    synth rs fs (Call str) with (index fs str)
+      synth rs fs (Call str) | (Yes (MkFix ** prf))
+        = Yes (Call prf ** Call str prf)
       synth rs fs (Call str) | (No no)
-        = No (\case ((Call idx) ** (Call idx)) => no (_ ** idx) )
+        = No (\case ((Call idx) ** (Call str idx)) => no (_ ** idx) )
 
-    synth rs fs (Rec str k) with (synth rs (fs :< (MkFix str)) k)
-      synth rs fs (Rec str k) | (Yes (kty ** prf))
-        = Yes (Rec str kty ** Rec prf)
-      synth rs fs (Rec str k) | (No no)
-        = No (\case ((Rec str kty) ** (Rec x)) => no (kty ** x))
+    synth rs fs (Rec k) with (synth rs (fs :< ( MkFix)) k)
+      synth rs fs (Rec k) | (Yes (kty ** prf))
+        = Yes (Rec kty ** Rec prf)
+      synth rs fs (Rec k) | (No no)
+        = No (\case ((Rec kty) ** (Rec x)) => no (kty ** x))
 
-    synth rs fs (Comm cty r bs) with (isElem (MkRole r) rs)
-      synth rs fs (Comm cty r bs) | (Yes ridx) with (synth synth rs fs bs)
-        synth rs fs (Comm cty r bs) | (Yes ridx) | (Yes (tys ** tms))
-          = Yes (Comm cty ridx tys ** Comm ridx tms)
-        synth rs fs (Comm cty r bs) | (Yes ridx) | (No no)
-          = No (\case ((Comm cty idx tys) ** (Comm idx x)) => no (tys ** x))
+    synth rs fs (Comm cty n bs) with (index rs n)
+      synth rs fs (Comm cty n bs) | (Yes ridx) with (synth synth rs fs bs)
+        synth rs fs (Comm cty n bs) | (Yes (r ** ridx)) | (Yes (tys ** tms))
+          = Yes (Comm cty ridx tys ** Comm n ridx tms)
+        synth rs fs (Comm cty n bs) | (Yes ridx) | (No no)
+          = No (\case ((Comm cty idx tys) ** (Comm n idx x)) => no (tys ** x))
 
       synth rs fs (Comm cty r bs) | (No no)
-        = No (\case (Comm cty idx tys ** Comm idx x) => no idx)
+        = No (\case (Comm cty idx tys ** Comm n idx x) => no (_ ** idx))
 
   namespace Local
+    mutual
+      uniques : Local Local rs fs tms a
+             -> Local Local rs fs tms b
+             -> a === b
+      uniques End End = Refl
+      uniques (Ext x xs) (Ext y ys) with (unique x y)
+        uniques (Ext x xs) (Ext y ys) | Refl with (uniques xs ys)
+          uniques (Ext x xs) (Ext y ys) | Refl | Refl = Refl
 
-    uniques : Local Local rs fs tms a
-           -> Local Local rs fs tms b
-           -> a === b
-    uniques x y = ?uniques_rhs
+      export
+      unique : Local rs fs tm a
+            -> Local rs fs tm b
+            -> a === b
+      unique End End = Refl
+      unique (Call n idx) (Call n x) with (unique idx x)
+        unique (Call n idx) (Call n x) | Refl with (unique2 idx x)
+          unique (Call n x) (Call n x) | Refl | Refl = Refl
 
-    export
-    unique : (fs : SnocList Fix)
-          -> {a,b : Local rs fs}
-          -> Local rs fs tm a
-          -> Local rs fs tm b
-          -> a === b
-    unique {tm} fs x y with (x)
-      unique {tm = End} fs x End | End = Refl
-      unique {tm = (Call f)} fs x (Call y) | (Call idx) = ?unique_rhs_rhs_2
-      unique {tm = (Rec f kast)} fs x (Rec y) | (Rec z) with (unique (fs :< MkFix f) z y)
-        unique {tm = (Rec f kast)} fs x (Rec y) | (Rec z) | Refl = Refl
+      unique (Rec x) (Rec y) with (unique x y)
+        unique (Rec x) (Rec y) | Refl = Refl
 
-      unique {tm = (Comm cty r tms)} fs x (Comm y w) | (Comm idx z) = ?unique_rhs_rhs_4
+      unique (Comm n idx xs) (Comm n idy ys) with (unique idx idy)
+        unique (Comm n idx xs) (Comm n idy ys) | Refl with (unique2 idx idy)
+          unique (Comm n idy xs) (Comm n idy ys) | Refl | Refl with (uniques xs ys)
+            unique (Comm n idy xs) (Comm n idy ys) | Refl | Refl | Refl = Refl
+
 
 -- [ EOF ]

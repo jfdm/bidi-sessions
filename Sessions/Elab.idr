@@ -32,19 +32,23 @@ mutual
                   -> Type
     where
       Stop : Synth rs fs ts Stop Stop
-      Call : (idx : AtIndex (MkFix f) fs n)
-                 -> Synth rs fs ts (Call f) (Call idx)
-      Loop : (cont : Synth rs (fs :< (MkFix f)) ts tm  ty)
-                  -> Synth rs  fs    ts (Loop f  tm) (Rec f ty)
+      Call : (n : Nat)
+          -> (idx : AtIndex MkFix fs n)
+                 -> Synth rs fs ts (Call n) (Call idx)
 
-      Send : (prf  : Elem (MkRole r) rs)
+      Loop : (cont : Synth rs (fs :< (MkFix)) ts tm  ty)
+                  -> Synth rs  fs    ts (Loop tm) (Rec ty)
+
+      Send : {r : _}
+          -> (prf  : AtIndex r rs n)
           -> (cont : Synth rs fs ts tm ty)
-                  -> Synth rs fs ts (Send r l b tm)
-                                 (Comm SEND idx [B l b ty])
+                  -> Synth rs fs ts (Send n l b tm)
+                                 (Comm SEND prf [B l b ty])
 
-      Recv : (idx : Elem (MkRole r) rs)
+      Recv : {r : _}
+          -> (idx : AtIndex r rs n)
           -> (bs  : Synth rs fs ts tms tys)
-                 -> Synth rs fs ts (Recv r tms) (Comm RECV idx tys)
+                 -> Synth rs fs ts (Recv n tms) (Comm RECV idx tys)
 
       If : (l,r : Local rs fs)
         -> (cond : Expr ts BOOL c)
@@ -61,7 +65,7 @@ mutual
   data Check : (rs : SnocList Role)
             -> (fs : SnocList (Fix))
             -> (ts : SnocList (String,Base))
-            -> (ty : Local rs fs)
+           -> (ty : Local rs fs)
             -> (tm : Check.AST)
                   -> Type
     where
@@ -116,6 +120,12 @@ namespace Branches
       = No (\case ((B l b ty :: tys) ** (Ext x y)) => no (ty ** x))
 
 
+mergeFails : Synth rs fs ts tt tyL
+          -> Synth rs fs ts ff tyR
+          -> (DPair (Local rs fs) (Merge tyL tyR) -> Void)
+          -> DPair (Local rs fs) (Synth rs fs ts (If c tt ff)) -> Void
+mergeFails px py f (fst ** (If l r cond pl pr prf)) = ?mergeFails_rhs_1
+
 checkFails : Local rs fs typetm type
           -> (Check rs fs ts type tm -> Void)
           -> DPair (Local rs fs)
@@ -127,38 +137,37 @@ checkFails pl f (ty ** (The x y)) with (unique pl x)
 synth rs fs ts Stop
   = Yes (Stop ** Stop)
 
-synth rs fs ts (Call str) with (AtIndex.lookup fs (MkFix str))
-  synth rs fs ts (Call str) | (Yes (n ** prf))
-    = Yes (Call prf ** Call prf)
+synth rs fs ts (Call str) with (index fs str)
+  synth rs fs ts (Call str) | (Yes (MkFix ** prf))
+    = Yes (Call prf ** Call str prf)
   synth rs fs ts (Call str) | (No no)
-    = No (\case ((Call idx) ** (Call idx)) => no (_ ** idx))
+    = No (\case ((Call idx) ** (Call n idx)) => no (_ ** idx))
 
-synth rs fs ts (Loop str k) with (synth rs (fs :< (MkFix str)) ts k)
-  synth rs fs ts (Loop str k) | (Yes (ty ** prf))
-    = Yes (Rec  str ty ** Loop prf)
-  synth rs fs ts (Loop str k) | (No no)
-    = No (\case ((Rec str ty) ** (Loop cont)) => no (ty ** cont))
+synth rs fs ts (Loop k) with (synth rs (fs :< (MkFix)) ts k)
+  synth rs fs ts (Loop k) | (Yes (ty ** prf))
+    = Yes (Rec ty ** Loop prf)
+  synth rs fs ts (Loop k) | (No no)
+    = No (\case ((Rec ty) ** (Loop cont)) => no (ty ** cont))
 
-synth rs fs ts (Send r l ty k) with (isElem (MkRole r) rs)
+synth rs fs ts (Send r l ty k) with (index rs r)
   synth rs fs ts (Send r l ty k) | (Yes ridx) with (synth rs fs ts k)
-    synth rs fs ts (Send r l ty k) | (Yes ridx) | (Yes (lty ** prf))
+    synth rs fs ts (Send r l ty k) | (Yes (n ** ridx)) | (Yes (lty ** prf))
       = Yes (Comm SEND ridx [B l ty lty] ** Send ridx prf)
     synth rs fs ts (Send r l ty k) | (Yes ridx) | (No no)
-      = No (\case ((Comm SEND idx [B l _ ty]) ** (Send prf cont)) => no (ty ** cont))
+      = No (\case ((Comm SEND prf [B l _ ty]) ** (Send prf cont)) => no (ty ** cont))
 
   synth rs fs ts (Send r l ty k) | (No no)
-    = No (\case ((Comm SEND idx [B l bty ty]) ** (Send prf cont)) => no prf)
+    = No (\case ((Comm SEND prf [B l bty ty]) ** (Send prf cont)) => no (_ ** prf))
 
-synth rs fs ts (Recv r xs) with (isElem (MkRole r) rs)
-  synth rs fs ts (Recv r xs) | (Yes ridx) with (synth rs fs ts xs)
-    synth rs fs ts (Recv r xs) | (Yes ridx) | (Yes (fst ** snd))
-      = Yes (Comm RECV _ fst ** Recv ridx snd)
+synth rs fs ts (Recv r xs) with (index rs r)
+  synth rs fs ts (Recv r xs) | (Yes (n ** idx)) with (synth rs fs ts xs)
+    synth rs fs ts (Recv r xs) | (Yes (n ** idx)) | (Yes (fst ** snd))
+      = Yes (Comm RECV _ fst ** Recv idx snd)
 
-    synth rs fs ts (Recv r xs) | (Yes ridx) | (No no)
-      = No (\case ((Comm RECV idx tys) ** (Recv idx bs)) => no (tys ** bs))
-
+    synth rs fs ts (Recv r xs) | (Yes (n ** idx)) | (No no)
+      = No (\case (((Comm RECV x tys) ** (Recv x bs))) => no (tys ** bs))
   synth rs fs ts (Recv r xs) | (No no)
-    = No (\case ((Comm RECV idx tys) ** (Recv idx bs)) => no idx)
+    = No (\case ((Comm RECV idx tys) ** (Recv idx bs)) => no (_ ** idx))
 
 synth rs fs ts (If c tt ff) with (check ts BOOL c)
   synth rs fs ts (If c tt ff) | (Yes cond) with (synth rs fs ts tt)
@@ -167,7 +176,10 @@ synth rs fs ts (If c tt ff) with (check ts BOOL c)
         synth rs fs ts (If c tt ff) | (Yes cond) | (Yes (tyL ** pL)) | (Yes (tyR ** pR)) | (Yes (ty ** prf))
           = Yes (ty ** If tyL tyR cond pL pR prf)
         synth rs fs ts (If c tt ff) | (Yes cond) | (Yes (tyL ** pL)) | (Yes (tyR ** pR)) | (No no)
-          = No (\case (fst ** (If tyL tyR x y z prf)) => no (fst ** ?condMerge))
+          = No (mergeFails pL pR no)
+
+--          (\case (fst ** (If tyL tyR x y z prf)) => no (fst ** ?condMerge))
+
       synth rs fs ts (If c tt ff) | (Yes cond) | (Yes (tyL ** pL)) | (No no)
         = No (\case (fst ** (If _ _ _ y z _)) => no (_ ** z))
     synth rs fs ts (If c tt ff) | (Yes cond) | (No no)
@@ -183,7 +195,6 @@ synth rs fs ts (The tytm tm) with (synth rs fs tytm)
 
     synth rs fs ts (The tytm tm) | (Yes (ty ** pTT)) | (No no)
       = No (checkFails pTT no)
-      --(\case (ty ** (The ty x y)) => no ?theTyTy)
 
   synth rs fs ts (The tytm tm) | (No no)
     = No (\case (fst ** (The x y)) => no (fst ** x))

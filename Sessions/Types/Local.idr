@@ -12,7 +12,7 @@ import public Sessions.Types.Common
 
 mutual
   public export
-  data Branch : SnocList Role -> SnocList Fix -> Type
+  data Branch : Role.Context -> Fix.Context -> Type
     where
       B : (l : String)
        -> (t : Base)
@@ -20,19 +20,18 @@ mutual
             -> Branch rs fs
 
   public export
-  data Local : SnocList Role
-            -> SnocList Fix
+  data Local : Role.Context
+            -> Fix.Context
             -> Type
     where
       Stop : Local rs fs
-      Call : {n : Nat}
-          -> AtIndex (MkFix s) fs n
+      Call : {n : _}
+          -> AtIndex MkFix fs n
           -> Local rs fs
-      Rec : (s : String)
-         -> Local rs (fs :< (MkFix s))
+      Rec : Local rs (fs :< MkFix)
          -> Local rs fs
       Comm : CTy
-          -> Elem.Elem r rs
+          -> AtIndex r rs n
           -> List (Branch rs fs)
           -> Local rs fs
 

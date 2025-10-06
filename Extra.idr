@@ -2,10 +2,33 @@ module Extra
 
 import Decidable.Equality
 
+import public Data.So
 import Data.SnocList
 import Data.SnocList.Elem
 
-namespace SnocList
+namespace String
+
+  namespace Positive
+
+    public export
+    data EqualNot : (x,y : String)
+                 -> Type
+      where
+        NEQ : (prf : So (x /= y)) -> EqualNot x y
+
+
+    export
+    toVoid : {x,y : String}
+          -> x = y
+          -> (EqualNot x y)
+          -> Not (x = y)
+    toVoid Refl (NEQ prf) Refl = believe_me {b=Void}()
+
+    export
+    decEq : (x,y : String) -> Either (EqualNot x y) (Equal x y)
+    decEq x y with (Equality.decEq x y)
+      decEq x x | (Yes Refl) = Right Refl
+      decEq x y | (No no) = Left (NEQ $ believe_me Oh)
 
 namespace List
 
@@ -112,23 +135,29 @@ namespace SnocList
           = No (\case (Z ** H Refl) => no Refl
                       (((S n) ** (T z))) => contra (n ** z))
 
-    export
+    public export
     unique : (this : AtIndex x xs n)
           -> (that : AtIndex y xs n)
-                  -> Equal x y
+                  -> x === y
     unique (H Refl) (H Refl) = Refl
     unique (T z) (T w) = unique z w
 
-
+    public export
+    unique2 : (this : AtIndex x xs n)
+           -> (that : AtIndex x xs n)
+           -> (this === that)
+    unique2 (H Refl) (H Refl) = Refl
+    unique2 (T x) (T y) with (unique2 x y)
+      unique2 (T x) (T x) | Refl = Refl
 
   namespace Lookup
     public export
-    data Elem : Pair a b -> SnocList (a,b) -> Type where
+    data Elem : Pair String b -> SnocList (String,b) -> Type where
       Here : (prfN : Equal x y)
           -> (prfT : Equal a b)
                   -> Lookup.Elem (x,a) (tesr :< (y,b))
 
-      There : (contraN : Equal x y -> Void)
+      There : (contraN : EqualNot x y)
            -> (later   : Lookup.Elem (x,a) tesr)
                       -> Lookup.Elem (x,a) (tesr :< (y,b))
 
@@ -175,49 +204,50 @@ namespace SnocList
     Uninhabited (DPair b (\type => Lookup.Elem (name, type) Lin)) where
       uninhabited ((fst ** snd)) = absurd snd
 
-    notInRest : (name = x -> Void)
-             -> (DPair b (\type => Lookup.Elem (name, type) sx) -> Void)
-             -> DPair b (\type => Lookup.Elem (name, type) (sx :< (x, type')))
-             -> Void
-    notInRest f g (MkDPair type' (Here Refl Refl)) = f Refl
-    notInRest f g (MkDPair fst (There contraN later)) = g (_ ** later)
+--    notInRest : (name = x -> Void)
+--             -> (DPair b (\type => Lookup.Elem (name, type) sx) -> Void)
+--             -> DPair b (\type => Lookup.Elem (name, type) (sx :< (x, type')))
+--             -> Void
+--    notInRest f g (MkDPair type' (Here Refl Refl)) = f Refl
+--    notInRest f g (MkDPair fst (There contraN later)) = g (_ ** later)
+
+
+    notInRest : {name : _}
+             -> EqualNot name x
+             -> ((type : b ** Lookup.Elem (name, type) sx) -> Void)
+             -> (type : b ** Lookup.Elem (name, type) (sx :< (x, type'))) -> Void
+    notInRest y f (type' ** (Here Refl Refl)) with (toVoid Refl y)
+      notInRest y f (type' ** (Here Refl Refl)) | boom = boom Refl
+    notInRest y f (fst ** (There contraN later)) = f (fst ** later)
 
     export
-    lookup : DecEq a
-          => DecEq b
-          => (ctxt : SnocList (a,b))
-          -> (name : a)
+    lookup : DecEq b
+          => (ctxt : SnocList (String,b))
+          -> (name : String)
                   -> Dec (type ** Lookup.Elem (name,type) ctxt)
     lookup Lin name = No absurd
-    lookup (sx :< (x,type') ) name with (decEq name x)
-      lookup (sx :< (name,type')) name | (Yes Refl) = Yes (MkDPair type' (Here Refl Refl))
-      lookup (sx :< (x,type')) name | (No contra) with (lookup sx name)
-        lookup (sx :< (x,type')) name | (No contra) | (Yes (MkDPair fst snd))
+    lookup (sx :< (x,type') ) name with (Positive.decEq name x)
+      lookup (sx :< (name,type')) name | (Right Refl) = Yes (MkDPair type' (Here Refl Refl))
+      lookup (sx :< (x,type')) name | (Left contra) with (lookup sx name)
+        lookup (sx :< (x,type')) name | (Left contra) | (Yes (MkDPair fst snd))
           = Yes (_ ** There contra snd)
-        lookup (sx :< (x,type')) name | (No contra) | (No f)
+        lookup (sx :< (x,type')) name | (Left contra) | (No f)
           = No (notInRest contra f)
 
+
     export
-    unique : (this : Lookup.Elem (x,a) ctxt)
+    unique : {x : String}
+          -> (this : Lookup.Elem (x,a) ctxt)
           -> (that : Lookup.Elem (x,b) ctxt)
                   -> Equal a b
-    unique (Here Refl Refl) (Here Refl Refl)
-      = Refl
-    unique (There no _) (Here prf _)
-      = absurd (no prf)
+    unique (Here Refl Refl) (Here Refl Refl) = Refl
+    unique (Here Refl Refl) (There contraN later) with (toVoid Refl contraN)
+      unique (Here Refl Refl) (There contraN later) | boom = absurd (boom Refl)
 
-    unique (Here prf _) (There no _)
-      = absurd (no prf)
+    unique (There contraN later) (Here Refl Refl) with (toVoid Refl contraN)
+      unique (There contraN later) (Here Refl Refl) | boom = absurd (boom Refl)
 
-    unique (There _ ltrA) (There _ ltrB) = unique ltrA ltrB
+    unique (There noL ltrL) (There noR ltrR) with (unique ltrL ltrR)
+      unique (There noL ltrL) (There noR ltrR) | Refl = Refl
 
-
-{-
-    noHR : (the (Elem x (xs :< x)) (Here)) = the (Elem y (ys :< y')) (There z) -> Void
-    noHR Refl impossible
-
-    noRH : the (Elem y (ys :< y')) (There z) = (the (Elem x (xs :< x)) (Here)) -> Void
-    noRH Refl impossible
-
--}
 -- [ EOF ]

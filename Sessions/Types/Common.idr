@@ -35,15 +35,32 @@ namespace Role
   DecEq Role where
     decEq = Role.decEq
 
-namespace Fix
-  public export
-  data Fix  = MkFix String
 
-  decEq : (x,y : Fix) -> Dec (x = y)
-  decEq (MkFix x) (MkFix y) with (decEq x y)
-    decEq (MkFix x) (MkFix x) | (Yes Refl) = Yes Refl
-    decEq (MkFix x) (MkFix y) | (No contra) = No (\case Refl => contra Refl)
+  public export
+  Context : Type
+  Context = SnocList Role
+
+
+namespace Fix
+--  public export
+--  data Fix  = MkFix String
+--
+--  decEq : (x,y : Fix) -> Dec (x = y)
+--  decEq (MkFix x) (MkFix y) with (decEq x y)
+--    decEq (MkFix x) (MkFix x) | (Yes Refl) = Yes Refl
+--    decEq (MkFix x) (MkFix y) | (No contra) = No (\case Refl => contra Refl)
+--
+--  export
+--  DecEq Fix where
+--    decEq = Fix.decEq
+
+  public export
+  data Fix = MkFix
 
   export
   DecEq Fix where
-    decEq = Fix.decEq
+    decEq MkFix MkFix = Yes Refl
+
+  public export
+  Context : Type
+  Context = SnocList Fix

@@ -19,16 +19,16 @@ mutual
     namespace Type
       public export
       data Local = End
-                 | Call String
-                 | Rec String Local
-                 | Comm CTy String (List (String, Base, Local))
+                 | Call Nat
+                 | Rec Local
+                 | Comm CTy Nat (List (String, Base, Local))
 
     public export
     data AST = Stop
-             | Call String
-             | Loop String Synth.AST
-             | Send String String Base Synth.AST
-             | Recv String (List (String, String, Base, Synth.AST))
+             | Call Nat
+             | Loop Synth.AST
+             | Send Nat String Base Synth.AST
+             | Recv Nat (List (String, String, Base, Synth.AST))
              | If Check.Expr Synth.AST Synth.AST
              | The Local Check.AST
 

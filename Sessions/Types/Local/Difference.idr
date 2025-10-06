@@ -23,7 +23,7 @@ namespace Branch
 
   export
   diff : (x,y : Branch rs fs) -> Dec (Diff x y)
-  diff (B lx _ _) (B ly _ _) with (decEq lx ly)
+  diff (B lx _ _) (B ly _ _) with (Equality.decEq lx ly)
     diff (B lx _ _) (B lx _ _) | (Yes Refl) = No areSame
     diff (B lx _ _) (B ly _ _) | (No contra)
       = Yes (D contra)

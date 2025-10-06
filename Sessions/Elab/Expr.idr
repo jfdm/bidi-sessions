@@ -18,7 +18,8 @@ mutual
         True : Expr ts True BOOL
         False : Expr ts False BOOL
         N : Expr ts (N n) NAT
-        V : Lookup.Elem (v,b) ts
+        V : {v : String}
+         -> Lookup.Elem (v,b) ts
          -> Expr ts (V v) b
         The : Check.Expr ts ty tm
            -> Expr ts (The ty tm) ty
@@ -39,7 +40,8 @@ namespace Synth
   unique True True = Refl
   unique False False = Refl
   unique N N = Refl
-  unique (V x) (V y) = Lookup.unique x y
+  unique (V x) (V y) with (Lookup.unique x y)
+    unique (V x) (V y) | Refl = Refl
   unique (The x) (The y) = Refl
 
 namespace Expr

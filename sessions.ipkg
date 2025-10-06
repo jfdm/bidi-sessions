@@ -12,7 +12,7 @@ modules = Extra
         , Sessions.Types.Local.Merge.Synthesis
         , Sessions.Types.Local.Merge.Projection
 
-        -- Experiments
+        -- Experiments May not compile
         --        , Sessions.Types.Local.Merge.Experimental
         --        , Sessions.Types.Local.Merge.General
 

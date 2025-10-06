@@ -24,7 +24,7 @@ namespace Branch
   subset : (f   : (a,b : Local rs fs) -> Dec (how a b))
         -> (x,y : Branch rs fs)
                -> Dec (Subset how x y)
-  subset f (B lx tx kx) (B ly ty ky) with (decEq lx ly)
+  subset f (B lx tx kx) (B ly ty ky) with (Equality.decEq lx ly)
     subset f (B lx tx kx) (B lx ty ky) | (Yes Refl) with (decEq tx ty)
       subset f (B lx tx kx) (B lx tx ky) | (Yes Refl) | (Yes Refl) with (f kx ky)
         subset f (B lx tx kx) (B lx tx ky) | (Yes Refl) | (Yes Refl) | (Yes prf)
@@ -101,8 +101,8 @@ data Subset : (x,y : Local rs fs)
         -> Subset (Call idxx)
                   (Call idxy)
     Rec : Subset kx ky
-       -> Subset (Rec f kx)
-                 (Rec f ky)
+       -> Subset (Rec kx)
+                 (Rec ky)
 
     Comm : (cx = cy)
         -> (sx = sy)
@@ -114,13 +114,13 @@ data Subset : (x,y : Local rs fs)
 subsetSC : (Subset Stop (Call x)) -> Void
 subsetSC _ impossible
 
-subsetSR : (Subset Stop (Rec x s)) -> Void
+subsetSR : (Subset Stop (Rec s)) -> Void
 subsetSR _ impossible
 
 subsetSM : (Subset Stop (Comm x y xs)) -> Void
 subsetSM _ impossible
 
-subsetCR : (Subset (Call idx) (Rec x s)) -> Void
+subsetCR : (Subset (Call idx) (Rec s)) -> Void
 subsetCR _ impossible
 
 subsetCM : (Subset (Call idx) (Comm z x s)) -> Void
@@ -129,13 +129,13 @@ subsetCM _ impossible
 subsetCS : (Subset (Call x) Stop ) -> Void
 subsetCS _ impossible
 
-subsetRS : (Subset (Rec x s) Stop) -> Void
+subsetRS : (Subset (Rec s) Stop) -> Void
 subsetRS _ impossible
 
-subsetRC: (Subset (Rec x s) (Call idx) ) -> Void
+subsetRC: (Subset (Rec  s) (Call idx) ) -> Void
 subsetRC _ impossible
 
-subsetRM: (Subset (Rec x s) (Comm a w idx) ) -> Void
+subsetRM: (Subset (Rec  s) (Comm a w idx) ) -> Void
 subsetRM _ impossible
 
 
@@ -145,7 +145,7 @@ subsetMS _ impossible
 subsetMC : (Subset  (Comm z x s) (Call idx)) -> Void
 subsetMC _ impossible
 
-subsetMR: (Subset (Comm a w idx) (Rec x s)) -> Void
+subsetMR: (Subset (Comm a w idx) (Rec s)) -> Void
 subsetMR _ impossible
 
 export
@@ -155,7 +155,7 @@ subset Stop Stop
   = Yes Stop
 subset Stop (Call _)
   = No subsetSC
-subset Stop (Rec _ _)
+subset Stop (Rec  _)
   = No subsetSR
 subset Stop (Comm _ _ _)
   = No subsetSM
@@ -169,33 +169,29 @@ subset (Call x) (Call y) with (decEq x y)
   subset (Call x) (Call y) | (No no)
     = No (\case (Call prf) => no prf)
 
-subset (Call _) (Rec _ _)
+subset (Call _) (Rec  _)
   = No subsetCR
 subset (Call _) (Comm _ _ _)
   = No subsetCM
 
-subset (Rec _ _) Stop
+subset (Rec _) Stop
   = No subsetRS
-subset (Rec _ _) (Call _)
+subset (Rec _) (Call _)
   = No subsetRC
-subset (Rec fx kx) (Rec fy ky) with (decEq fx fy)
-  subset (Rec fx kx) (Rec fx ky) | (Yes Refl) with (subset kx ky)
-    subset (Rec fx kx) (Rec fx ky) | (Yes Refl) | (Yes prf)
-      = Yes (Rec prf)
-    subset (Rec fx kx) (Rec fx ky) | (Yes Refl) | (No no)
-      = No (\case (Rec x) => no x)
+subset (Rec kx) (Rec ky) with (subset kx ky)
+  subset (Rec kx) (Rec ky) | (Yes prf)
+    = Yes (Rec prf)
+  subset (Rec kx) (Rec ky) | (No no)
+    = No (\case (Rec x) => no x)
 
-  subset (Rec fx kx) (Rec fy ky) | (No no)
-    = No (\case (Rec x) => no Refl)
-
-subset (Rec _ _) (Comm _ _ _)
+subset (Rec _) (Comm _ _ _)
   = No subsetRM
 
 subset (Comm _ _ _) Stop
   = No subsetMS
 subset (Comm _ _ _) (Call x)
   = No subsetMC
-subset (Comm _ _ _) (Rec f x)
+subset (Comm _ _ _) (Rec x)
   = No subsetMR
 subset (Comm lx tx kx) (Comm ly ty ky) with (decEq lx ly)
   subset (Comm lx tx kx) (Comm lx ty ky) | (Yes Refl) with (decEq tx ty)

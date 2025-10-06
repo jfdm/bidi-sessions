@@ -27,7 +27,7 @@ A constant work in progress.....
     Most of the issues with completeness for elaboration come with evidence that certain error cases *will* provide void.
     The issue is not with the theory but demonstrating to the compiler that we can find void when dealing with computations that arise when discharging proof obligations...
 
-    + [ ] Synthesis of local types from terms describing local types is unique
-    + [ ] When annotations fail we get void
+    + [X] Synthesis of local types from terms describing local types is unique
+    + [X] When annotations fail we get void
     + [ ] When subsets fails we get void
     + [ ] When merging fails we get void
