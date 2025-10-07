@@ -18,7 +18,10 @@ modules = Extra
 
         , Sessions.Types.Local.Merge.Synthesis
         , Sessions.Types.Local.Merge.Projection
+        , Sessions.Types.Local.Merge.Projection.Merges
 
+        , Sessions.Types.Global
+        , Sessions.Types.Global.Projection
         -- Experiments May not compile
         --        , Sessions.Types.Local.Merge.Experimental
         --        , Sessions.Types.Local.Merge.General
@@ -29,6 +32,7 @@ modules = Extra
         , Sessions.AST
         , Sessions.Elab.Expr
         , Sessions.Elab.Local
+        , Sessions.Elab.Global
 
         , Sessions.Elab.Terms.Core
         , Sessions.Elab.Terms.Proof
@@ -37,3 +41,5 @@ modules = Extra
         , Sessions.Elab.Terms
 
         , Sessions.Elab
+
+        , Example

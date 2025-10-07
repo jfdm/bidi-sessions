@@ -1,4 +1,4 @@
-module Sessions.Types.Local.Merge.Fold
+module Sessions.Types.Local.Merge.Projection.Merges
 
 import Decidable.Equality
 
@@ -13,50 +13,50 @@ import Sessions.Types.Local.Merge.Projection
 %default total
 
 public export
-data Reduce : (xs : List (Local rs fs))
+data Merges : (xs : List (Local rs fs))
            -> (z   :       Local rs fs)
            -> Type
   where
-    Last : Reduce [x] x
+    Last : Merges [x] x
     Next : {z,q : _}
-        -> Reduce xs z
+        -> Merges xs z
         -> Projection.Merge x z q
-        -> Reduce (x::xs) q
+        -> Merges (x::xs) q
 
-Uninhabited (Reduce [] z) where
+Uninhabited (Merges [] z) where
   uninhabited Last impossible
   uninhabited (Next x y w) impossible
 
 export
-unique : Reduce xs a
-      -> Reduce xs b
+unique : Merges xs a
+      -> Merges xs b
       -> a === b
 unique Last Last = Refl
 unique (Next xs xc) (Next ys zq) with (unique xs ys)
     unique (Next xs xq) (Next ys yq) | Refl with (unique xq yq)
       unique (Next xs xq) (Next ys yq) | Refl | Refl = Refl
 
-finalMergeFails : (DPair (Local rs fs) (Merge x z) -> Void) -> Reduce (y :: xs) z
-               -> DPair (Local rs fs) (Reduce  (x :: (y :: xs))) -> Void
+finalMergeFails : (DPair (Local rs fs) (Merge x z) -> Void) -> Merges (y :: xs) z
+               -> DPair (Local rs fs) (Merges  (x :: (y :: xs))) -> Void
 finalMergeFails f w (fst ** (Next v s)) with (unique w v)
   finalMergeFails f w (fst ** (Next v s)) | Refl = f (fst ** s)
 
 export
-reduce : (xs : List (Local rs fs))
-            -> Dec (DPair (Local rs fs) (Reduce xs))
-reduce []
+merge : (xs : List (Local rs fs))
+            -> Dec (DPair (Local rs fs) (Merges xs))
+merge []
   = No $ \case (fst ** snd) => absurd snd
 
-reduce (x :: [])
+merge (x :: [])
   = Yes (x ** Last)
 
-reduce (x :: y :: xs) with (reduce (y::xs))
-  reduce (x :: y :: xs) | (Yes (z ** pZ)) with (merge x z)
-    reduce (x :: y :: xs) | (Yes (z ** pZ)) | (Yes (fst ** snd))
+merge (x :: y :: xs) with (merge (y::xs))
+  merge (x :: y :: xs) | (Yes (z ** pZ)) with (merge x z)
+    merge (x :: y :: xs) | (Yes (z ** pZ)) | (Yes (fst ** snd))
       = Yes (fst ** Next pZ snd)
-    reduce (x :: y :: xs) | (Yes (z ** pZ)) | (No no)
+    merge (x :: y :: xs) | (Yes (z ** pZ)) | (No no)
       = No (finalMergeFails no pZ)
-  reduce (x :: y :: xs) | (No contra)
+  merge (x :: y :: xs) | (No contra)
     = No $ \case ((fst ** (Next z w))) => (contra (_ ** z))
 
 -- [ EOF ]
