@@ -17,16 +17,16 @@ A constant work in progress.....
   + [X] Full merge for projection
   + [X] Elaboration of an AST to terms
 
-+ [ ] Completeness
++ [x] Completeness
 
   + [X] Subtyping local types
   + [X] Full merge for synthesis
   + [X] Full merge for projection
   + [x] Elaboration of an AST to terms
 
-  + [ ] projection
+  + [x] projection
 
 + [ ] Totality
-  + [ ] Unique/Merge for Synthesis
-  + [ ] Unique/Merge for Projection
-  + [ ] Unique/Merge for Merge Fold for Projection
+  + [X] Unique/Merge for Synthesis
+  + [x] Unique/Merge for Projection
+  + [x] Unique/Merge for Merge Fold for Projection
