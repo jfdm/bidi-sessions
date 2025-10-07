@@ -12,6 +12,7 @@ import public Sessions.Types.Local.Difference
 import public Sessions.Types.Local.Merge.Branch
 import public Sessions.Types.Local.Merge.Branches
 
+%default total
 
 public export
 data Merge : (x,y,z : Local rs fs)
@@ -86,7 +87,7 @@ mergeMSR (_ ** _) impossible
 mergeMRS: DPair (Local rs fs) (Merge (Comm RECV w idx) (Comm SEND v ix)) -> Void
 mergeMRS (_ ** _) impossible
 
-export
+covering export
 merge : (x,y : Local rs fs) -> Dec (DPair (Local rs fs) (Merge x y))
 merge Stop Stop = Yes (Stop ** Stop)
 merge Stop (Call x) = No mergeSC
@@ -144,5 +145,21 @@ merge (Comm cx rx xs) (Comm cy ry ys) with (decEq cx cy)
   merge (Comm RECV rx xs) (Comm RECV ry ys) | (No no)
     = No (\case (Comm RECV _ _ ** Recv Refl _) => no Refl)
 
+
+covering export
+unique : Projection.Merge lx ry a
+      -> Projection.Merge lx ry b
+      -> a === b
+unique Stop Stop = Refl
+unique (Call x) (Call y) = Refl
+
+unique (Rec x) (Rec y) with (unique x y)
+  unique (Rec x) (Rec y) | Refl = Refl
+
+unique (Send Refl x) (Send Refl y) with (unique unique x y)
+  unique (Send Refl x) (Send Refl y) | Refl = Refl
+
+unique (Recv Refl x) (Recv Refl y) with (Full.unique unique x y)
+  unique (Recv Refl x) (Recv Refl y) | Refl = Refl
 
 -- [ EOF ]

@@ -11,6 +11,8 @@ import Sessions.Types.Local
 import Sessions.Types.Local.Difference
 import Sessions.Types.Local.Merge.Branch
 
+%default total
+
 
 ||| There is an y in ys that results in z
 public export

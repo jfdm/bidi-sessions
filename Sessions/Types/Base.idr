@@ -2,6 +2,8 @@ module Sessions.Types.Base
 
 import Decidable.Equality
 
+%default total
+
 public export
 data Base = NAT | BOOL
 

@@ -3,6 +3,8 @@ module Sessions.AST
 import Sessions.Types.Base
 import Sessions.Types.Common
 
+%default total
+
 mutual
   namespace Expr
     namespace Synth

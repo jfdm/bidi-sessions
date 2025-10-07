@@ -9,6 +9,8 @@ import Sessions.Types.Base
 import Sessions.Types.Common
 import Sessions.AST
 
+%default total
+
 mutual
   namespace Exprs
     namespace Synth

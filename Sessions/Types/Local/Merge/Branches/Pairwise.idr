@@ -11,6 +11,8 @@ import Sessions.Types.Local
 import Sessions.Types.Local.Difference
 import Sessions.Types.Local.Merge.Branch
 
+%default total
+
 public export
 data Union : (how : (a,b,c : Local rs fs) -> Type)
           -> (xs : List (Branch rs fs))

@@ -8,6 +8,8 @@ import Sessions.AST
 import Sessions.Elab.Expr
 import Sessions.Elab.Local
 
+%default total
+
 mutual
   namespace Branches
     public export

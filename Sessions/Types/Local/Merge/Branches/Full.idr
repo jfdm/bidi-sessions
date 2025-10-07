@@ -13,6 +13,8 @@ import Sessions.Types.Local.Merge.Branch
 import Sessions.Types.Local.Merge.Branches.Single
 import Sessions.Types.Local.Merge.Branches.Sparse
 
+%default total
+
 
 public export
 data Merge : (how : (a,b,c : Local rs fs) -> Type)

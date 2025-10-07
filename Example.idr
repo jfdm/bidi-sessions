@@ -8,6 +8,8 @@ import Sessions.Types.Local.Merge.Projection
 import Sessions.AST
 import Sessions.Elab
 
+%default total
+
 left : Local [< MkRole "Alice", MkRole "Bob"] Lin
 left = Comm SEND (H Refl)
      [ B "foo" NAT Stop

@@ -6,6 +6,8 @@ import public Data.So
 import Data.SnocList
 import Data.SnocList.Elem
 
+%default total
+
 namespace String
 
   namespace Positive
@@ -105,8 +107,25 @@ namespace SnocList
       uninhabited (T y) impossible
 
     public export
+    data EQ : (a : AtIndex x xs n)
+           -> (b : AtIndex y ys m)
+                -> Type
+      where
+        HEQ : EQ (H Refl) (H Refl)
+        TEQ : EQ xs ys
+           -> EQ (T xs) (T ys)
+
+    export
+    toRefl : {0 a : AtIndex x xs n}
+          -> {0 b : AtIndex x xs n}
+          -> EQ a b -> a === b
+    toRefl HEQ = Refl
+    toRefl (TEQ x) with (toRefl x)
+      toRefl (TEQ x) | Refl = Refl
+
+    public export
     data EqualNot : (a : AtIndex x xs n)
-                 -> (b : AtIndex y xs m)
+                 -> (b : AtIndex y ys m)
                       -> Type
       where
         LeftH : EqualNot (T z) (H Refl)
@@ -114,6 +133,40 @@ namespace SnocList
         ThereNot : EqualNot xs ys
                 -> EqualNot (T xs) (T ys)
 
+    export
+    toVoid : {0 a : AtIndex x xs n}
+          -> {0 b : AtIndex x xs n}
+          -> a === b
+          -> AtIndex.EqualNot a b
+          -> Void
+    toVoid Refl (ThereNot y) = toVoid Refl y
+
+
+    export
+    decEqAlt : (a : AtIndex x xs n)
+            -> (b : AtIndex y xs m)
+                 -> Either (EqualNot a b)
+                           (EQ       a b)
+    decEqAlt (H Refl) (H Refl)
+      = Right HEQ
+    decEqAlt (H Refl) (T z)
+      = Left RightH
+    decEqAlt (T z) (H Refl) = Left LeftH
+    decEqAlt (T z) (T w) with (decEqAlt z w)
+      decEqAlt (T z) (T w) | (Left v) = Left (ThereNot v)
+      decEqAlt (T z) (T w) | (Right v) = Right (TEQ v)
+
+    export
+    decEqAlt' : (a : AtIndex x xs n)
+             -> (b : AtIndex y xs m)
+                  -> Either (EqualNot a b)
+                            (Equal    a b)
+    decEqAlt' (H Refl) (H Refl) = Right Refl
+    decEqAlt' (H Refl) (T z) = Left RightH
+    decEqAlt' (T z) (H Refl) = Left LeftH
+    decEqAlt' (T z) (T w) with (decEqAlt' z w)
+      decEqAlt' (T z) (T w) | (Left v) = Left (ThereNot v)
+      decEqAlt' (T z) (T z) | (Right Refl) = Right Refl
 
 
     sameIsWrong : EqualNot (H Refl) (H Refl) -> Void
@@ -244,7 +297,7 @@ namespace SnocList
              -> EqualNot name x
              -> ((type : b ** Lookup.Elem (name, type) sx) -> Void)
              -> (type : b ** Lookup.Elem (name, type) (sx :< (x, type'))) -> Void
-    notInRest y f (type' ** (Here Refl Refl)) with (toVoid Refl y)
+    notInRest y f (type' ** (Here Refl Refl)) with (Positive.toVoid Refl y)
       notInRest y f (type' ** (Here Refl Refl)) | boom = boom Refl
     notInRest y f (fst ** (There contraN later)) = f (fst ** later)
 
@@ -269,10 +322,10 @@ namespace SnocList
           -> (that : Lookup.Elem (x,b) ctxt)
                   -> Equal a b
     unique (Here Refl Refl) (Here Refl Refl) = Refl
-    unique (Here Refl Refl) (There contraN later) with (toVoid Refl contraN)
+    unique (Here Refl Refl) (There contraN later) with (Positive.toVoid Refl contraN)
       unique (Here Refl Refl) (There contraN later) | boom = absurd (boom Refl)
 
-    unique (There contraN later) (Here Refl Refl) with (toVoid Refl contraN)
+    unique (There contraN later) (Here Refl Refl) with (Positive.toVoid Refl contraN)
       unique (There contraN later) (Here Refl Refl) | boom = absurd (boom Refl)
 
     unique (There noL ltrL) (There noR ltrR) with (unique ltrL ltrR)

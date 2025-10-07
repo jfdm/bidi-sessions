@@ -9,6 +9,7 @@ import public Extra
 
 import Sessions.Types.Local
 
+%default total
 
 namespace Branch
   public export
@@ -19,24 +20,6 @@ namespace Branch
      -> Subset how
               (B lx tx kx)
               (B ly ty ky)
-
-  export
-  subset : (f   : (a,b : Local rs fs) -> Dec (how a b))
-        -> (x,y : Branch rs fs)
-               -> Dec (Subset how x y)
-  subset f (B lx tx kx) (B ly ty ky) with (Equality.decEq lx ly)
-    subset f (B lx tx kx) (B lx ty ky) | (Yes Refl) with (decEq tx ty)
-      subset f (B lx tx kx) (B lx tx ky) | (Yes Refl) | (Yes Refl) with (f kx ky)
-        subset f (B lx tx kx) (B lx tx ky) | (Yes Refl) | (Yes Refl) | (Yes prf)
-          = Yes (B Refl Refl prf)
-        subset f (B lx tx kx) (B lx tx ky) | (Yes Refl) | (Yes Refl) | (No contra)
-          = No (\case (B _ _ x) => contra x)
-
-      subset f (B lx tx kx) (B lx ty ky) | (Yes Refl) | (No contra)
-        = No (\case (B _ prf _) => contra prf)
-
-    subset f (B lx tx kx) (B ly ty ky) | (No contra)
-      = No (\case (B prf _ _ ) => contra prf)
 
 namespace Branches
 
@@ -59,38 +42,6 @@ namespace Branches
         ->      Subset how (x::xs)     ys
         ->      Subset how (x::xs) (y::ys)
 
-
-  isEmpty : Subset how (x :: xs) [] -> Void
-  isEmpty Stop impossible
-  isEmpty (Keep y z) impossible
-  isEmpty (Skip f y) impossible
-
-  export
-  subset : (f     : (a,b : Local rs fs) -> Dec (how a b))
-        -> (xs,ys : List $ Branch rs fs)
-                 -> Dec (Subset how xs ys)
-  subset f [] ys
-    = Yes Stop
-
-  subset f (x :: xs) []
-    = No isEmpty
-
-  subset f (x :: xs) (y :: ys) with (subset f x y)
-    subset f (x :: xs) (y :: ys) | (Yes pH) with (subset f xs ys)
-      subset f (x :: xs) (y :: ys) | (Yes pH) | (Yes pT)
-        = Yes (Keep pH pT)
-      subset f (x :: xs) (y :: ys) | (Yes pH) | (No contra)
-        = No (\case (Keep z w) => contra w
-                    (Skip g z) => g pH)
-
-    subset f (x :: xs) (y :: ys) | (No contra) with (subset f (x::xs) ys)
-      subset f (x :: xs) (y :: ys) | (No noH) | (Yes prf)
-        = Yes (Skip noH prf)
-
-      subset f (x :: xs) (y :: ys) | (No noH) | (No noL)
-        = No (\case (Keep pH _) => noH pH
-                    (Skip nH pL) => noL pL)
-
 public export
 data Subset : (x,y : Local rs fs)
            -> Type
@@ -109,7 +60,6 @@ data Subset : (x,y : Local rs fs)
         -> Branches.Subset Subset kx ky
         -> Subset (Comm cx sx kx)
                   (Comm cy sy ky)
-
 
 subsetSC : (Subset Stop (Call x)) -> Void
 subsetSC _ impossible
@@ -148,62 +98,120 @@ subsetMC _ impossible
 subsetMR: (Subset (Comm a w idx) (Rec s)) -> Void
 subsetMR _ impossible
 
-export
-subset : (x,y : Local rs fs)
-             -> Dec (Subset x y)
-subset Stop Stop
-  = Yes Stop
-subset Stop (Call _)
-  = No subsetSC
-subset Stop (Rec  _)
-  = No subsetSR
-subset Stop (Comm _ _ _)
-  = No subsetSM
+mutual
+  namespace Branch
+    export
+    subset : (f   : (a,b : Local rs fs) -> Dec (how a b))
+          -> (x,y : Branch rs fs)
+                 -> Dec (Subset how x y)
+    subset f (B lx tx kx) (B ly ty ky) with (Equality.decEq lx ly)
+      subset f (B lx tx kx) (B lx ty ky) | (Yes Refl) with (decEq tx ty)
+        subset f (B lx tx kx) (B lx tx ky) | (Yes Refl) | (Yes Refl) with (f kx ky)
+          subset f (B lx tx kx) (B lx tx ky) | (Yes Refl) | (Yes Refl) | (Yes prf)
+            = Yes (B Refl Refl prf)
+          subset f (B lx tx kx) (B lx tx ky) | (Yes Refl) | (Yes Refl) | (No contra)
+            = No (\case (B _ _ x) => contra x)
 
-subset (Call _) Stop
-  = No subsetCS
+        subset f (B lx tx kx) (B lx ty ky) | (Yes Refl) | (No contra)
+          = No (\case (B _ prf _) => contra prf)
 
-subset (Call x) (Call y) with (decEq x y)
-  subset (Call x) (Call y) | (Yes prf)
-    = Yes (Call prf)
-  subset (Call x) (Call y) | (No no)
-    = No (\case (Call prf) => no prf)
+      subset f (B lx tx kx) (B ly ty ky) | (No contra)
+        = No (\case (B prf _ _ ) => contra prf)
 
-subset (Call _) (Rec  _)
-  = No subsetCR
-subset (Call _) (Comm _ _ _)
-  = No subsetCM
+  namespace Branches
 
-subset (Rec _) Stop
-  = No subsetRS
-subset (Rec _) (Call _)
-  = No subsetRC
-subset (Rec kx) (Rec ky) with (subset kx ky)
-  subset (Rec kx) (Rec ky) | (Yes prf)
-    = Yes (Rec prf)
-  subset (Rec kx) (Rec ky) | (No no)
-    = No (\case (Rec x) => no x)
 
-subset (Rec _) (Comm _ _ _)
-  = No subsetRM
+    isEmpty : Subset how (x :: xs) [] -> Void
+    isEmpty Stop impossible
+    isEmpty (Keep y z) impossible
+    isEmpty (Skip f y) impossible
 
-subset (Comm _ _ _) Stop
-  = No subsetMS
-subset (Comm _ _ _) (Call x)
-  = No subsetMC
-subset (Comm _ _ _) (Rec x)
-  = No subsetMR
-subset (Comm lx tx kx) (Comm ly ty ky) with (decEq lx ly)
-  subset (Comm lx tx kx) (Comm lx ty ky) | (Yes Refl) with (decEq tx ty)
-    subset (Comm lx tx kx) (Comm lx tx ky) | (Yes Refl) | (Yes Refl) with (subset subset kx ky)
-      subset (Comm lx tx kx) (Comm lx tx ky) | (Yes Refl) | (Yes Refl) | (Yes prf)
-        = Yes (Comm Refl Refl prf)
-      subset (Comm lx tx kx) (Comm lx tx ky) | (Yes Refl) | (Yes Refl) | (No no)
-        = No (\case (Comm _ _ prf) => no prf)
+    export
+    subset : (f     : (a,b : Local rs fs) -> Dec (how a b))
+          -> (xs,ys : List $ Branch rs fs)
+                   -> Dec (Subset how xs ys)
+    subset f [] ys
+      = Yes Stop
 
-    subset (Comm lx tx kx) (Comm lx ty ky) | (Yes Refl) | (No no)
-      = No (\case (Comm _ prf _) => no prf)
+    subset f (x :: xs) []
+      = No isEmpty
 
-  subset (Comm lx tx kx) (Comm ly ty ky) | (No no)
-    = No (\case (Comm prf _ _) => no prf)
+    subset f (x :: xs) (y :: ys) with (subset f x y)
+      subset f (x :: xs) (y :: ys) | (Yes pH) with (subset f xs ys)
+        subset f (x :: xs) (y :: ys) | (Yes pH) | (Yes pT)
+          = Yes (Keep pH pT)
+        subset f (x :: xs) (y :: ys) | (Yes pH) | (No contra)
+          = No (\case (Keep z w) => contra w
+                      (Skip g z) => g pH)
+
+      subset f (x :: xs) (y :: ys) | (No contra) with (subset f (x::xs) ys)
+        subset f (x :: xs) (y :: ys) | (No noH) | (Yes prf)
+          = Yes (Skip noH prf)
+
+        subset f (x :: xs) (y :: ys) | (No noH) | (No noL)
+          = No (\case (Keep pH _) => noH pH
+                      (Skip nH pL) => noL pL)
+
+
+
+
+  export
+  subset : (x,y : Local rs fs)
+               -> Dec (Subset x y)
+  subset Stop Stop
+    = Yes Stop
+  subset Stop (Call _)
+    = No subsetSC
+  subset Stop (Rec  _)
+    = No subsetSR
+  subset Stop (Comm _ _ _)
+    = No subsetSM
+
+  subset (Call _) Stop
+    = No subsetCS
+
+  subset (Call x) (Call y) with (decEq x y)
+    subset (Call x) (Call y) | (Yes prf)
+      = Yes (Call prf)
+    subset (Call x) (Call y) | (No no)
+      = No (\case (Call prf) => no prf)
+
+  subset (Call _) (Rec  _)
+    = No subsetCR
+  subset (Call _) (Comm _ _ _)
+    = No subsetCM
+
+  subset (Rec _) Stop
+    = No subsetRS
+  subset (Rec _) (Call _)
+    = No subsetRC
+  subset (Rec kx) (Rec ky) with (subset kx ky)
+    subset (Rec kx) (Rec ky) | (Yes prf)
+      = Yes (Rec prf)
+    subset (Rec kx) (Rec ky) | (No no)
+      = No (\case (Rec x) => no x)
+
+  subset (Rec _) (Comm _ _ _)
+    = No subsetRM
+
+  subset (Comm _ _ _) Stop
+    = No subsetMS
+  subset (Comm _ _ _) (Call x)
+    = No subsetMC
+  subset (Comm _ _ _) (Rec x)
+    = No subsetMR
+  subset (Comm lx tx kx) (Comm ly ty ky) with (decEq lx ly)
+    subset (Comm lx tx kx) (Comm lx ty ky) | (Yes Refl) with (decEq tx ty)
+      subset (Comm lx tx kx) (Comm lx tx ky) | (Yes Refl) | (Yes Refl) with (subset subset kx ky)
+        subset (Comm lx tx kx) (Comm lx tx ky) | (Yes Refl) | (Yes Refl) | (Yes prf)
+          = Yes (Comm Refl Refl prf)
+        subset (Comm lx tx kx) (Comm lx tx ky) | (Yes Refl) | (Yes Refl) | (No no)
+          = No (\case (Comm _ _ prf) => no prf)
+
+      subset (Comm lx tx kx) (Comm lx ty ky) | (Yes Refl) | (No no)
+        = No (\case (Comm _ prf _) => no prf)
+
+    subset (Comm lx tx kx) (Comm ly ty ky) | (No no)
+      = No (\case (Comm prf _ _) => no prf)
+
 -- [ EOF ]

@@ -7,6 +7,8 @@ import Data.SnocList.Elem
 
 import Sessions.Types.Local
 
+%default total
+
 namespace Branch
 
   public export

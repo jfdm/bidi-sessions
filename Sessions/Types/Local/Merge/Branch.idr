@@ -10,6 +10,8 @@ import public Extra
 import Sessions.Types.Local
 import Sessions.Types.Local.Difference
 
+%default total
+
 public export
 data Merge : (how : (a,b,c : Local rs fs) -> Type) -> (x,y,z : Branch rs fs) -> Type where
   B : (lx = ly)

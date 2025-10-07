@@ -25,3 +25,8 @@ A constant work in progress.....
   + [x] Elaboration of an AST to terms
 
   + [ ] projection
+
++ [ ] Totality
+  + [ ] Unique/Merge for Synthesis
+  + [ ] Unique/Merge for Projection
+  + [ ] Unique/Merge for Merge Fold for Projection

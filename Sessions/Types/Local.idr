@@ -10,6 +10,8 @@ import public Extra
 import public Sessions.Types.Base
 import public Sessions.Types.Common
 
+%default total
+
 mutual
   public export
   data Branch : Role.Context -> Fix.Context -> Type

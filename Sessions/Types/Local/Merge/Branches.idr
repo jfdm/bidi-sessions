@@ -16,4 +16,6 @@ import public Sessions.Types.Local.Merge.Branches.Pairwise
 import public Sessions.Types.Local.Merge.Branches.Sparse
 import public Sessions.Types.Local.Merge.Branches.Full
 
+%default total
+
 -- [ EOF ]

@@ -9,7 +9,7 @@ import public Sessions.Elab.Expr
 import public Sessions.Elab.Local
 import public Sessions.Elab.Terms
 
-
+%default total
 
 namespace Session
   public export
