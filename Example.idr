@@ -28,8 +28,6 @@ right = Comm SEND (H Refl)
      , B "bat" NAT Stop
      ]
 
-
-export
 huzzah : Session.AST
 huzzah
   = Session
@@ -44,5 +42,13 @@ huzzah
       (Send 1 "foo" (N 1) Stop)
       (Send 1 "bar" True  Stop))
 
+test : Synth.AST
+test
+  = If (Switch True)
+       (Send 1 "foo" (N 1) (Recv 1 [ ("a", "x", BOOL, Stop)
+                                  , ("b", "x",NAT, Stop)]))
+       (Send 1 "foo" (N 2) (Recv 1 [ ("a", "x",BOOL, Stop)
+                                  , ("b", "x",NAT, Stop)]
+       ))
 
 -- [ EOF ]
