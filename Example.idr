@@ -33,14 +33,16 @@ export
 huzzah : Session.AST
 huzzah
   = Session
-    (Comm SEND 0
-    [ ("foo", NAT, End)
-    , ("baz", BOOL, End)
-    , ("bar", BOOL, End)
-    ])
-    $ If (Switch True)
-      (Send 0 "foo" (N 1) Stop)
-      (Send 0 "bar" True  Stop)
+    (Choice 0 1
+            [ ("foo", NAT, End)
+            , ("baz", BOOL, End)
+            , ("bar", BOOL, End)
+            , ("sup", NAT, End)
+            ])
+    0
+    (If (Switch True)
+      (Send 1 "foo" (N 1) Stop)
+      (Send 1 "bar" True  Stop))
 
 
 -- [ EOF ]

@@ -30,7 +30,8 @@ mutual
           -> Global rs fs
       Rec : Global rs (fs :< MkFix)
          -> Global rs fs
-      Choice : (x : AtIndex s rs n)
+      Choice : {s,r : _}
+            -> (x : AtIndex s rs n)
             -> (y : AtIndex r rs m)
             -> EqualNot x y
             -> List (Branch rs fs)

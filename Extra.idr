@@ -123,21 +123,33 @@ namespace SnocList
     toRefl (TEQ x) with (toRefl x)
       toRefl (TEQ x) | Refl = Refl
 
-    public export
-    data EqualNot : (a : AtIndex x xs n)
-                 -> (b : AtIndex y ys m)
-                      -> Type
-      where
-        LeftH : EqualNot (T z) (H Refl)
-        RightH : EqualNot  (H Refl) (T z)
-        ThereNot : EqualNot xs ys
-                -> EqualNot (T xs) (T ys)
+    namespace Not
+      public export
+      data EqualNot : (a : AtIndex x xs n)
+                   -> (b : AtIndex y ys m)
+                        -> Type
+        where
+          LeftH : EqualNot (T z) (H Refl)
+          RightH : EqualNot  (H Refl) (T z)
+          ThereNot : EqualNot xs ys
+                  -> EqualNot (T xs) (T ys)
+
+      export
+      unique : {0 a : AtIndex x xs n}
+            -> {0 b : AtIndex y ys m}
+            -> (x : EqualNot a b)
+            -> (y : EqualNot a b)
+            -> x === y
+      unique LeftH LeftH = Refl
+      unique RightH RightH = Refl
+      unique (ThereNot x) (ThereNot y) with (unique x y)
+        unique (ThereNot x) (ThereNot x) | Refl = Refl
 
     export
     toVoid : {0 a : AtIndex x xs n}
           -> {0 b : AtIndex x xs n}
           -> a === b
-          -> AtIndex.EqualNot a b
+          -> Not.EqualNot a b
           -> Void
     toVoid Refl (ThereNot y) = toVoid Refl y
 

@@ -25,6 +25,13 @@ mutual
                  | Rec Local
                  | Comm CTy Nat (List (String, Base, Local))
 
+    namespace Protocol
+      public export
+      data Global = End
+                  | Call Nat
+                  | Rec Global
+                  | Choice Nat Nat (List (String, Base, Global))
+
     public export
     data AST = Stop
              | Call Nat
@@ -42,6 +49,6 @@ mutual
 
   namespace Session
     public export
-    data AST = Session Local Synth.AST
+    data AST = Session Global Nat Synth.AST
 
 -- [ EOF ]
