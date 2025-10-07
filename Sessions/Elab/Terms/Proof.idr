@@ -24,7 +24,6 @@ mutual
                               (Synth rs fs ts tms))
 
   export
-  covering
   synth : (rs : SnocList Role)
        -> (fs : SnocList (Fix))
        -> (ts : SnocList (String,Base))
@@ -33,7 +32,6 @@ mutual
                            (Synth rs fs ts tm))
 
   export
-  covering
   check : (rs : SnocList Role)
        -> (fs : SnocList (Fix))
        -> (ts : SnocList (String,Base))
@@ -56,8 +54,6 @@ mutual
         = No (\case ((B l b ty :: tys) ** (Ext x y)) => no (ty ** x))
 
 
-
-  covering
   mergeFails : Synth rs fs ts tt tyL
             -> Synth rs fs ts ff tyR
             -> (DPair (Local rs fs) (Merge tyL tyR) -> Void)

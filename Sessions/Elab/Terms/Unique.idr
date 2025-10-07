@@ -23,7 +23,7 @@ mutual
       uniques (Ext x xs) (Ext y ys) | Refl with (uniques xs ys)
         uniques (Ext x xs) (Ext y ys) | Refl | Refl = Refl
 
-    covering export
+    export
     unique : Core.Synth rs fs ts tm a
           -> Core.Synth rs fs ts tm b
           -> a === b

@@ -27,7 +27,7 @@ Uninhabited (Reduce [] z) where
   uninhabited Last impossible
   uninhabited (Next x y w) impossible
 
-covering export
+export
 unique : Reduce xs a
       -> Reduce xs b
       -> a === b
@@ -36,13 +36,12 @@ unique (Next xs xc) (Next ys zq) with (unique xs ys)
     unique (Next xs xq) (Next ys yq) | Refl with (unique xq yq)
       unique (Next xs xq) (Next ys yq) | Refl | Refl = Refl
 
-covering
 finalMergeFails : (DPair (Local rs fs) (Merge x z) -> Void) -> Reduce (y :: xs) z
                -> DPair (Local rs fs) (Reduce  (x :: (y :: xs))) -> Void
 finalMergeFails f w (fst ** (Next v s)) with (unique w v)
   finalMergeFails f w (fst ** (Next v s)) | Refl = f (fst ** s)
 
-covering export
+export
 reduce : (xs : List (Local rs fs))
             -> Dec (DPair (Local rs fs) (Reduce xs))
 reduce []

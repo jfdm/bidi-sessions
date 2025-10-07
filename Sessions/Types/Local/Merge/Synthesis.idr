@@ -87,80 +87,98 @@ mergeMSR (_ ** _) impossible
 mergeMRS: DPair (Local rs fs) (Merge (Comm RECV w idx) (Comm SEND v ix)) -> Void
 mergeMRS (_ ** _) impossible
 
-partial export
-merge : (x,y : Local rs fs) -> Dec (DPair (Local rs fs) (Merge x y))
-merge Stop Stop = Yes (Stop ** Stop)
-merge Stop (Call x) = No mergeSC
-merge Stop (Rec x) = No mergeSR
-merge Stop (Comm x y xs) = No mergeSM
-
-merge (Call x) Stop = No mergeCS
-merge (Call x) (Call y) with (decEq x y)
-  merge (Call x) (Call y) | (Yes prf)
-    = Yes (Call x ** Call prf)
-  merge (Call x) (Call y) | (No contra)
-    = No (\case (Call fst ** Call prf) => contra prf)
-
-merge (Call x) (Rec y) = No mergeCR
-merge (Call x) (Comm y z xs) = No mergeCM
-
-merge (Rec x) Stop = No mergeRS
-merge (Rec x) (Call y) = No mergeRC
-merge (Rec x) (Rec z) with (merge x z)
-  merge (Rec x) (Rec z) | (Yes ((fst ** snd))) = Yes (Rec fst ** Rec snd)
-  merge (Rec x) (Rec z) | (No no)
-    = No $ \case (((Rec kz) ** (Rec y))) => no (kz ** y)
+mutual
+  namespace Full
+    export
+    merge : (xs : List (Branch rs fs))
+         -> (ys : List (Branch rs fs))
+               -> Dec (DPair (List (Branch rs fs))
+                             (Full.Merge Synthesis.Merge xs ys))
+    merge = Full.merge Synthesis.merge
 
 
-merge (Rec x) (Comm y z xs) = No mergeRM
+  export
+  merge : (x,y : Local rs fs) -> Dec (DPair (Local rs fs) (Merge x y))
+  merge Stop Stop = Yes (Stop ** Stop)
+  merge Stop (Call x) = No mergeSC
+  merge Stop (Rec x) = No mergeSR
+  merge Stop (Comm x y xs) = No mergeSM
 
-merge (Comm x z xs) Stop = No mergeMS
-merge (Comm x z xs) (Call y) = No mergeMC
-merge (Comm x z xs) (Rec y) = No mergeMR
-merge (Comm cx rx xs) (Comm cy ry ys) with (decEq cx cy)
-  merge (Comm cx rx xs) (Comm cy ry ys) | (Yes pC) with (decEq rx ry)
-    merge (Comm SEND rx xs) (Comm SEND rx ys) | (Yes Refl) | (Yes Refl) with (Full.merge merge xs ys)
-      merge (Comm SEND rx xs) (Comm SEND rx ys) | (Yes Refl) | (Yes Refl) | (Yes (zs ** prf))
-        = Yes (Comm SEND rx zs ** Send Refl prf)
-      merge (Comm SEND rx xs) (Comm SEND rx ys) | (Yes Refl) | (Yes Refl) | (No no)
-        = No (\case (Comm SEND _ _ ** Send Refl snd) => no (_ ** snd))
+  merge (Call x) Stop = No mergeCS
+  merge (Call x) (Call y) with (decEq x y)
+    merge (Call x) (Call y) | (Yes prf)
+      = Yes (Call x ** Call prf)
+    merge (Call x) (Call y) | (No contra)
+      = No (\case (Call fst ** Call prf) => contra prf)
 
-    merge (Comm RECV rx xs) (Comm RECV rx ys) | (Yes Refl) | (Yes Refl) with (Pairwise.union merge xs ys)
-      merge (Comm RECV rx xs) (Comm RECV rx ys) | (Yes Refl) | (Yes Refl) | (Yes (zs ** prf))
-        = Yes (Comm RECV rx zs ** Recv Refl prf)
-      merge (Comm RECV rx xs) (Comm RECV rx ys) | (Yes Refl) | (Yes Refl) | (No no)
-        = No (\case (Comm RECV _ _ ** Recv Refl prf) => no (_ ** prf))
+  merge (Call x) (Rec y) = No mergeCR
+  merge (Call x) (Comm y z xs) = No mergeCM
 
-    merge (Comm cx rx xs) (Comm cx ry ys) | (Yes Refl) | (No contra)
-      = No (\case (Comm SEND _ _ ** Send Refl _) => contra Refl
-                  (Comm RECV _ _ ** Recv Refl _) => contra Refl)
-
-  -- [ NOTE ] c'est horrible
-
-  merge (Comm SEND rx xs) (Comm SEND ry ys) | (No no)
-    = No (\case (Comm SEND _ _ ** Send Refl snd) => no Refl)
-  merge (Comm SEND rx xs) (Comm RECV ry ys) | (No no)
-    = No mergeMSR
-  merge (Comm RECV rx xs) (Comm SEND ry ys) | (No no)
-    = No mergeMRS
-  merge (Comm RECV rx xs) (Comm RECV ry ys) | (No no)
-    = No (\case (Comm RECV _ _ ** Recv Refl _) => no Refl)
+  merge (Rec x) Stop = No mergeRS
+  merge (Rec x) (Call y) = No mergeRC
+  merge (Rec x) (Rec z) with (merge x z)
+    merge (Rec x) (Rec z) | (Yes ((fst ** snd))) = Yes (Rec fst ** Rec snd)
+    merge (Rec x) (Rec z) | (No no)
+      = No $ \case (((Rec kz) ** (Rec y))) => no (kz ** y)
 
 
-partial export
-unique : Synthesis.Merge lx ry a
-      -> Synthesis.Merge lx ry b
-      -> a === b
-unique Stop Stop = Refl
-unique (Call x) (Call y) = Refl
+  merge (Rec x) (Comm y z xs) = No mergeRM
 
-unique (Rec x) (Rec y) with (unique x y)
-  unique (Rec x) (Rec y) | Refl = Refl
+  merge (Comm x z xs) Stop = No mergeMS
+  merge (Comm x z xs) (Call y) = No mergeMC
+  merge (Comm x z xs) (Rec y) = No mergeMR
+  merge (Comm cx rx xs) (Comm cy ry ys) with (decEq cx cy)
+    merge (Comm cx rx xs) (Comm cy ry ys) | (Yes pC) with (decEq rx ry)
+      merge (Comm SEND rx xs) (Comm SEND rx ys) | (Yes Refl) | (Yes Refl) with (Full.merge xs ys)
+        merge (Comm SEND rx xs) (Comm SEND rx ys) | (Yes Refl) | (Yes Refl) | (Yes (zs ** prf))
+          = Yes (Comm SEND rx zs ** Send Refl prf)
+        merge (Comm SEND rx xs) (Comm SEND rx ys) | (Yes Refl) | (Yes Refl) | (No no)
+          = No (\case (Comm SEND _ _ ** Send Refl snd) => no (_ ** snd))
 
-unique (Send Refl x) (Send Refl y) with (Full.unique unique x y)
-  unique (Send Refl x) (Send Refl y) | Refl = Refl
+      merge (Comm RECV rx xs) (Comm RECV rx ys) | (Yes Refl) | (Yes Refl) with (Pairwise.union merge xs ys)
+        merge (Comm RECV rx xs) (Comm RECV rx ys) | (Yes Refl) | (Yes Refl) | (Yes (zs ** prf))
+          = Yes (Comm RECV rx zs ** Recv Refl prf)
+        merge (Comm RECV rx xs) (Comm RECV rx ys) | (Yes Refl) | (Yes Refl) | (No no)
+          = No (\case (Comm RECV _ _ ** Recv Refl prf) => no (_ ** prf))
 
-unique (Recv Refl x) (Recv Refl y) with (unique unique x y)
-  unique (Recv Refl x) (Recv Refl y) | Refl = Refl
+      merge (Comm cx rx xs) (Comm cx ry ys) | (Yes Refl) | (No contra)
+        = No (\case (Comm SEND _ _ ** Send Refl _) => contra Refl
+                    (Comm RECV _ _ ** Recv Refl _) => contra Refl)
+
+    -- [ NOTE ] c'est horrible
+
+    merge (Comm SEND rx xs) (Comm SEND ry ys) | (No no)
+      = No (\case (Comm SEND _ _ ** Send Refl snd) => no Refl)
+    merge (Comm SEND rx xs) (Comm RECV ry ys) | (No no)
+      = No mergeMSR
+    merge (Comm RECV rx xs) (Comm SEND ry ys) | (No no)
+      = No mergeMRS
+    merge (Comm RECV rx xs) (Comm RECV ry ys) | (No no)
+      = No (\case (Comm RECV _ _ ** Recv Refl _) => no Refl)
+
+mutual
+  namespace Full
+    export
+    unique : Full.Merge Synthesis.Merge xs ys as
+          -> Full.Merge Synthesis.Merge xs ys bs
+          -> as === bs
+    unique = Full.unique
+
+
+  export
+  unique : Synthesis.Merge lx ry a
+        -> Synthesis.Merge lx ry b
+        -> a === b
+  unique Stop Stop = Refl
+  unique (Call x) (Call y) = Refl
+
+  unique (Rec x) (Rec y) with (unique x y)
+    unique (Rec x) (Rec y) | Refl = Refl
+
+  unique (Send Refl x) (Send Refl y) with (Full.unique x y)
+    unique (Send Refl x) (Send Refl y) | Refl = Refl
+
+  unique (Recv Refl x) (Recv Refl y) with (unique unique x y)
+    unique (Recv Refl x) (Recv Refl y) | Refl = Refl
 
 -- [ EOF ]
