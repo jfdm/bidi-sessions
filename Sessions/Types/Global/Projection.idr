@@ -10,7 +10,6 @@ import  Extra
 import Sessions.Types.Global
 import Sessions.Types.Local
 import Sessions.Types.Local.Merge.Projection
-import Sessions.Types.Local.Merge.Projection.Merges
 
 %default total
 
@@ -105,7 +104,7 @@ data Project : (p : AtIndex r rs n)
          -> (prfS : EqualNot whom s)
          -> (prfR : EqualNot whom r)
          -> (prfM : Merge.Project Project whom xs ys)
-         -> (prfF : Merges ys y)
+         -> (prfF : Merges Projection.Merge ys y)
                  -> Project whom
                             (Choice s r notSR xs)
                             y
@@ -145,7 +144,7 @@ mutual
       unique (Next x xs) (Next y ys) | Refl with (unique xs ys)
         unique (Next x xs) (Next y ys) | Refl | Refl = Refl
 
-  mergeFails : (DPair (Local rs fs) (Merges.Merges ys) -> Void) -> EqualNot whom r_1 -> EqualNot whom s_0
+  mergeFails : (DPair (Local rs fs) (Merges Projection.Merge ys) -> Void) -> EqualNot whom r_1 -> EqualNot whom s_0
              -> Merge.Project Project whom xs ys
              -> DPair (Local rs fs) (Project whom (Choice s_0 r_1 notSR xs)) -> Void
   mergeFails f notR notS _ (Comm SEND _ _ ** Select prf bs) = toVoid prf notS
@@ -226,7 +225,7 @@ mutual
 
 
     project whom (Choice s r notSR xs) | (Skips prfSNot prfRNot) with (Merge.project' whom xs)
-      project whom (Choice s r notSR xs) | (Skips prfSNot prfRNot) | (Yes (ys ** pYS)) with (merge ys)
+      project whom (Choice s r notSR xs) | (Skips prfSNot prfRNot) | (Yes (ys ** pYS)) with (Projection.merges ys)
         project whom (Choice s r notSR xs) | (Skips prfSNot prfRNot) | (Yes (ys ** pYS)) | (Yes (y ** prf))
           = Yes (y ** Merge prfSNot prfRNot pYS prf)
         project whom (Choice s r notSR xs) | (Skips prfSNot prfRNot) | (Yes (ys ** pYS)) | (No no)

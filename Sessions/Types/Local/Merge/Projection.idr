@@ -12,6 +12,8 @@ import public Sessions.Types.Local.Difference
 import public Sessions.Types.Local.Merge.Branch
 import public Sessions.Types.Local.Merge.Branches
 
+import public Sessions.Types.Local.Merge.Merges
+
 %default total
 
 public export
@@ -179,4 +181,19 @@ mutual
   unique (Recv Refl x) (Recv Refl y) with (Full.unique x y)
     unique (Recv Refl x) (Recv Refl y) | Refl = Refl
 
+
+namespace Projection
+
+  export
+  merges : (xs : List (Local rs fs))
+              -> Dec (DPair (Local rs fs)
+                            (Merges Projection.Merge xs))
+  merges = Merges.merge Projection.merge Projection.unique
+
+  namespace Merges
+    export
+    unique : Merges Projection.Merge xs a
+          -> Merges Projection.Merge xs b
+          -> a === b
+    unique = Merges.unique Projection.unique
 -- [ EOF ]

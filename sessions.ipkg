@@ -18,7 +18,6 @@ modules = Extra
 
         , Sessions.Types.Local.Merge.Synthesis
         , Sessions.Types.Local.Merge.Projection
-        , Sessions.Types.Local.Merge.Projection.Merges
 
         , Sessions.Types.Global
         , Sessions.Types.Global.Projection
