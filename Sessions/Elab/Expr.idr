@@ -2,6 +2,7 @@ module Sessions.Elab.Expr
 
 import Data.SnocList
 import Data.SnocList.Elem
+import Data.List.Elem
 
 import Extra
 
@@ -23,6 +24,7 @@ mutual
         V : {v : String}
          -> Lookup.Elem (v,b) ts
          -> Expr ts (V v) b
+
         The : Check.Expr ts ty tm
            -> Expr ts (The ty tm) ty
     namespace Check
@@ -33,6 +35,12 @@ mutual
           Switch : Expr ts tm tyA
                 -> (prf : tyA = tyB)
                 -> Expr ts tyB (Switch tm)
+
+          Tag : {tyE : _}
+             -> Synth.Expr ts e tyG
+             -> Elem (s,tyE) types
+             -> tyE === tyG
+             -> Expr ts (SUM types) (Tag s e)
 
 namespace Synth
   export
@@ -62,6 +70,16 @@ namespace Expr
   switchFails tm no (Switch this Refl) with (Synth.unique tm this)
     switchFails tm no (Switch this Refl) | Refl = no Refl
 
+
+  tagSumNotNat : Expr ts NAT (Tag l e) -> Void
+  tagSumNotNat (Switch x prf) impossible
+  tagSumNotNat (Tag x y prf) impossible
+
+  tagSumNotBool : Expr ts BOOL (Tag l e) -> Void
+  tagSumNotBool (Switch x prf) impossible
+  tagSumNotBool (Tag x y prf) impossible
+
+
   export
   check : (ts  : SnocList (String,Base))
        -> (ty  : Base)
@@ -77,12 +95,26 @@ namespace Expr
     check ts ty (Switch x) | (No no)
       = No (\case (Switch y Refl) => no (ty ** y))
 
+  check ts NAT (Tag l e)
+    = No tagSumNotNat
+  check ts BOOL (Tag l e)
+    = No tagSumNotBool
+  check ts (SUM xs) (Tag l e) with (synth ts e)
+    check ts (SUM xs) (Tag l e) | (Yes (tyE ** pTYe)) with (isElem (l, tyE) xs)
+      check ts (SUM xs) (Tag l e) | (Yes (tyE ** pTYe)) | (Yes prf)
+        = Yes (Tag pTYe prf Refl)
+      check ts (SUM xs) (Tag l e) | (Yes (tyE ** pTYe)) | (No contra)
+        = No $ \case (Tag x y Refl) => case unique  pTYe x of
+                      Refl => contra y
+
+    check ts (SUM xs) (Tag l e) | (No contra)
+      = No $ \case (Tag x y Refl) => contra ( _ ** x)
 
   synth ts True = Yes (BOOL ** True)
   synth ts False = Yes (BOOL ** False)
   synth ts (N k) = Yes (NAT ** N)
   synth ts (The b tm) with (check ts b tm)
-    synth ts (The b (Switch tm)) | (Yes prf) = Yes (b ** The prf)
+    synth ts (The b tm) | (Yes prf) = Yes (b ** The prf)
     synth ts (The b tm) | (No contra)
       = No (\case (fst ** (The x)) => contra x)
 

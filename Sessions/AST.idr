@@ -9,11 +9,13 @@ mutual
   namespace Expr
     namespace Synth
       public export
-      data Expr = True | False | N Nat | V String | The Base Check.Expr
+      data Expr = True | False | N Nat | V String
+                | The Base Check.Expr
 
     namespace Check
       public export
       data Expr = Switch Synth.Expr
+                | Tag String Synth.Expr
 
 mutual
   namespace Synth
