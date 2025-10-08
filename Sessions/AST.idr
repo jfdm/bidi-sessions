@@ -39,9 +39,10 @@ mutual
              | Call Nat
              | Loop Synth.AST
              | Send Nat String Synth.Expr Synth.AST
-             | Recv Nat (List (String, String, Base, Synth.AST))
-             | If Check.Expr Synth.AST Synth.AST
+             | Recv Nat Base (List (String, String, Synth.AST))
              | The Local Check.AST
+             | If Check.Expr Synth.AST Synth.AST
+             | Match Synth.Expr (List (String, String, Synth.AST))
 
   namespace Check
 

@@ -13,15 +13,26 @@ import Sessions.Elab.Terms.Core
 
 mutual
   namespace Synth
+    namespace Branches
+      export
+      uniques : Branches.Synth rs fs ts xs tm as
+             -> Branches.Synth rs fs ts xs tm bs
+             -> as === bs
+      uniques End End = Refl
+      uniques (Ext x xs) (Ext y ys) with (unique x y)
+        uniques (Ext x xs) (Ext y ys) | Refl with (uniques xs ys)
+          uniques (Ext x xs) (Ext y ys) | Refl | Refl = Refl
 
-    export
-    uniques : Branches.Synth rs fs ts tm as
-           -> Branches.Synth rs fs ts tm bs
-           -> as === bs
-    uniques End End = Refl
-    uniques (Ext x xs) (Ext y ys) with (unique x y)
-      uniques (Ext x xs) (Ext y ys) | Refl with (uniques xs ys)
-        uniques (Ext x xs) (Ext y ys) | Refl | Refl = Refl
+    namespace Cases
+      export
+      uniques : Cases.Synth rs fs ts xs tm as
+             -> Cases.Synth rs fs ts xs tm bs
+             -> as === bs
+      uniques End End = Refl
+      uniques (Ext x xs) (Ext y ys) with (unique x y)
+        uniques (Ext x xs) (Ext y ys) | Refl with (uniques xs ys)
+          uniques (Ext x xs) (Ext y ys) | Refl | Refl = Refl
+
 
     export
     unique : Core.Synth rs fs ts tm a
@@ -46,12 +57,17 @@ mutual
         unique (Recv ry xs) (Recv ry ys) | Refl | Refl with (uniques xs ys)
           unique (Recv ry xs) (Recv ry ys) | Refl | Refl | Refl = Refl
 
+
+    unique (The x px) (The y py) with (Local.unique x y)
+      unique (The x px) (The y py) | Refl = Refl
+
     unique (If cx tx fx px) (If cy ty fy py) with (unique tx ty)
       unique (If cx tx fx px) (If cy ty fy py) | Refl with (unique fx fy)
         unique (If cx tx fx px) (If cy ty fy py) | Refl | Refl with (unique px py)
           unique (If cx tx fx px) (If cy ty fy py) | Refl | Refl | Refl = Refl
 
-    unique (The x px) (The y py) with (Local.unique x y)
-      unique (The x px) (The y py) | Refl = Refl
-
+    unique (Match mx cx px) (Match my cy py) with (unique mx my)
+      unique (Match mx cx px) (Match my cy py) | Refl with (uniques cx cy)
+        unique (Match mx cx px) (Match my cy py) | Refl | Refl with (unique px py)
+          unique (Match mx cx px) (Match my cy py) | Refl | Refl | Refl = Refl
 -- [ EOF ]

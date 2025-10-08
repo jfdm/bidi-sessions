@@ -6,8 +6,8 @@ This work originated from Capable, developed as part of the DSbD AppControl proj
 
 This work provides proof that the ideas of bidirectionally typed multiparty sessions are sound and complete.
 
-
 A constant work in progress.....
+
 
 ## Status
 
@@ -26,7 +26,9 @@ A constant work in progress.....
 
   + [x] projection
 
-+ [ ] Totality
++ [X] Totality
   + [X] Unique/Merge for Synthesis
   + [x] Unique/Merge for Projection
   + [x] Unique/Merge for Merge Fold for Projection
+
++ [ ] Reduce proof bloat and repetition

@@ -75,4 +75,26 @@ export
 DecEq Base where
   decEq = Base.decEq
 
+
+public export
+data IsSum : Base -> Type where
+  YIS : IsSum (SUM xs)
+
+
+natNoSum : IsSum NAT -> Void
+natNoSum YIS impossible
+
+boolNotSum : IsSum BOOL -> Void
+boolNotSum YIS impossible
+
+export
+isSum : (b : Base) -> Dec (IsSum b)
+isSum NAT
+  = No natNoSum
+isSum BOOL
+  = No boolNotSum
+
+isSum (SUM xs)
+  = Yes YIS
+
 -- [ EOF ]

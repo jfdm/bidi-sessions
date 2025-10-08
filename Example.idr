@@ -45,10 +45,43 @@ huzzah
 test : Synth.AST
 test
   = If (Switch True)
-       (Send 1 "foo" (N 1) (Recv 1 [ ("a", "x", BOOL, Stop)
-                                  , ("b", "x",NAT, Stop)]))
-       (Send 1 "foo" (N 2) (Recv 1 [ ("a", "x",BOOL, Stop)
-                                  , ("b", "x",NAT, Stop)]
+       (Send 1 "foo" (N 1) (Recv 1 (SUM [("a",NAT), ("b", BOOL)])
+                                   [ ("a", "x", Stop)
+                                   , ("b", "x", Stop)]))
+       (Send 1 "foo" (N 2) (Recv 1 (SUM [("a",NAT), ("b", BOOL)])
+                                   [ ("a", "x",Stop)
+                                  , ("b", "x",Stop)]
        ))
 
+test1 : Synth.AST
+test1
+  = Match
+    (The (SUM [("foo", BOOL), ("bar", NAT)]) (Tag "foo" False))
+    [ ("foo", "x",
+        Send 1 "bat" (V "x") Stop
+        )
+    , ("bar", "x",
+        Send 1 "baz" True Stop
+        )
+    ]
+
+test2 : Session.AST
+test2
+  = Session
+    (Choice 0 1
+      [("foo", NAT, (Choice 1 0
+            [ ("foo", NAT, End)
+            , ("baz", BOOL, End)
+            , ("bar", BOOL, End)
+            , ("sup", NAT, End)
+            ]))])
+    0
+    (If (Switch True)
+       (Send 1 "foo" (N 1) (Recv 1 (SUM [("foo",NAT), ("baz", BOOL)])
+                                   [ ("foo", "x", Stop)
+                                   , ("baz", "x", Stop)]))
+       (Send 1 "foo" (N 2) (Recv 1 (SUM [("foo",NAT), ("baz", BOOL)])
+                                   [ ("foo", "x",Stop)
+                                  , ("baz", "x",Stop)]
+       )))
 -- [ EOF ]
