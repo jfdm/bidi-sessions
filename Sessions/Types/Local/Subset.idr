@@ -55,11 +55,17 @@ data Subset : (x,y : Local rs fs)
        -> Subset (Rec kx)
                  (Rec ky)
 
-    Comm : (cx = cy)
-        -> (sx = sy)
+    -- Sends can send more
+    Send : (sx = sy)
+        -> Branches.Subset Subset ky kx
+        -> Subset (Comm SEND sx kx)
+                  (Comm SEND sy ky)
+
+    Recv : (sx = sy)
         -> Branches.Subset Subset kx ky
-        -> Subset (Comm cx sx kx)
-                  (Comm cy sy ky)
+        -> Subset (Comm RECV sx kx)
+                  (Comm RECV sy ky)
+
 
 subsetSC : (Subset Stop (Call x)) -> Void
 subsetSC _ impossible
@@ -97,6 +103,14 @@ subsetMC _ impossible
 
 subsetMR: (Subset (Comm a w idx) (Rec s)) -> Void
 subsetMR _ impossible
+
+subsetMSR: (Subset (Comm SEND w idx) (Comm RECV y s)) -> Void
+subsetMSR _ impossible
+
+subsetMRS: (Subset (Comm RECV w idx) (Comm SEND y s)) -> Void
+subsetMRS _ impossible
+
+
 
 mutual
   namespace Branch
@@ -158,6 +172,7 @@ mutual
   export
   subset : (x,y : Local rs fs)
                -> Dec (Subset x y)
+
   subset Stop Stop
     = Yes Stop
   subset Stop (Call _)
@@ -200,18 +215,30 @@ mutual
     = No subsetMC
   subset (Comm _ _ _) (Rec x)
     = No subsetMR
-  subset (Comm lx tx kx) (Comm ly ty ky) with (decEq lx ly)
-    subset (Comm lx tx kx) (Comm lx ty ky) | (Yes Refl) with (decEq tx ty)
-      subset (Comm lx tx kx) (Comm lx tx ky) | (Yes Refl) | (Yes Refl) with (subset subset kx ky)
-        subset (Comm lx tx kx) (Comm lx tx ky) | (Yes Refl) | (Yes Refl) | (Yes prf)
-          = Yes (Comm Refl Refl prf)
-        subset (Comm lx tx kx) (Comm lx tx ky) | (Yes Refl) | (Yes Refl) | (No no)
-          = No (\case (Comm _ _ prf) => no prf)
 
-      subset (Comm lx tx kx) (Comm lx ty ky) | (Yes Refl) | (No no)
-        = No (\case (Comm _ prf _) => no prf)
+  subset (Comm RECV tx kx) (Comm SEND ty ky)
+    = No subsetMRS
+  subset (Comm SEND tx kx) (Comm RECV ty ky)
+    = No subsetMSR
 
-    subset (Comm lx tx kx) (Comm ly ty ky) | (No no)
-      = No (\case (Comm prf _ _) => no prf)
+  subset (Comm SEND tx kx) (Comm SEND ty ky) with (decEq tx ty)
+    subset (Comm SEND tx kx) (Comm SEND ty ky) | (No no)
+      = No $ \case (Send Refl _) => no Refl
+
+    subset (Comm SEND w kx) (Comm SEND w ky) | (Yes Refl) with (subset subset ky kx)
+      subset (Comm SEND w kx) (Comm SEND w ky) | (Yes Refl) | (Yes prf)
+        = Yes $ Send Refl prf
+      subset (Comm SEND w kx) (Comm SEND w ky) | (Yes Refl) | (No no)
+        = No $ \case (Send _ x) => no x
+
+  subset (Comm RECV tx kx) (Comm RECV ty ky) with (decEq tx ty)
+    subset (Comm RECV tx kx) (Comm RECV ty ky) | (No no)
+      = No $ \case (Recv prf _) => no prf
+
+    subset (Comm RECV w kx) (Comm RECV w ky) | (Yes Refl) with (subset subset kx ky)
+      subset (Comm RECV w kx) (Comm RECV w ky) | (Yes Refl) | (Yes prf)
+        = Yes (Recv Refl prf)
+      subset (Comm RECV w kx) (Comm RECV w ky) | (Yes Refl) | (No no)
+        = No $ \case (Recv Refl prf) => no prf
 
 -- [ EOF ]

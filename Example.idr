@@ -56,13 +56,15 @@ test
 test1 : Synth.AST
 test1
   = Match
-    (The (SUM [("foo", BOOL), ("bar", NAT)]) (Tag "foo" False))
+    (The (SUM [("foo", BOOL), ("bar", NAT), ("ting", (SUM [("new", BOOL)]))]) (Tag "foo" False))
     [ ("foo", "x",
         Send 1 "bat" (V "x") Stop
         )
     , ("bar", "x",
         Send 1 "baz" True Stop
         )
+    , ("ting", "x",
+        Send 1 "tang" False Stop)
     ]
 
 test2 : Session.AST
