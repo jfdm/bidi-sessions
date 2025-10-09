@@ -129,11 +129,11 @@ mutual
     mergeFails px py f (fst ** (If cond pl pr prf)) | Refl with (unique py pr)
       mergeFails px py f (fst ** (If cond pl pr prf)) | Refl | Refl = f (fst ** prf)
 
-  checkSubsetFails : (no : Subset tySyn ty -> Void)
+  checkSwitchFails : (no : tySyn === ty -> Void)
                   -> Synth rs fs ts tm tySyn
                   -> Check rs fs ts ty (Switch tm) -> Void
-  checkSubsetFails no x (Switch y prf) with (unique x y)
-    checkSubsetFails no x (Switch y prf) | Refl = no prf
+  checkSwitchFails no x (Switch y Refl) with (unique x y)
+    checkSwitchFails no x (Switch y Refl) | Refl = no Refl
 
   isNatSumExp : DPair (Local rs fs) (Synth rs fs ts (Recv r NAT xs)) -> Void
   isNatSumExp (_ ** pat) = void (absurd pat)
@@ -258,11 +258,11 @@ mutual
   -- [ Note ] Checking is here
 
   check rs fs ts ty (Switch tm) with (synth rs fs ts tm)
-    check rs fs ts ty (Switch tm) | (Yes (tySyn ** prf)) with (subset tySyn ty)
-      check rs fs ts ty (Switch tm) | (Yes (tySyn ** prf)) | (Yes prfS)
-        = Yes (Switch prf prfS)
+    check rs fs ts ty (Switch tm) | (Yes (tySyn ** prf)) with (decEq tySyn ty)
+      check rs fs ts ty (Switch tm) | (Yes (ty ** prf)) | (Yes Refl)
+        = Yes (Switch prf Refl)
       check rs fs ts ty (Switch tm) | (Yes (tySyn ** prf)) | (No no)
-        = No (checkSubsetFails no prf)
+        = No (checkSwitchFails no prf)
     check rs fs ts ty (Switch tm) | (No no)
       = No (\case (Switch x y) => no (_ ** x))
 

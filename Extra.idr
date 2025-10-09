@@ -34,6 +34,15 @@ namespace String
 
 namespace List
 
+  export
+  rightHeavy : [] = x :: xs -> Void
+  rightHeavy Refl impossible
+
+  export
+  leftHeavy : x :: xs = [] -> Void
+  leftHeavy Refl impossible
+
+
   public export
   data Shape : (xs,ys : List a) -> Type
     where

@@ -139,7 +139,7 @@ mutual
     where
       Switch : {tySyn : Local rs fs}
             -> Synth rs fs ts tm tySyn
-            -> Subset tySyn tyCheck
+            -> tySyn === tyCheck
             -> Check rs fs ts tyCheck (Switch tm)
 
 -- [ EOF ]

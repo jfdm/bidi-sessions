@@ -2,6 +2,8 @@ module Sessions.Types.Base
 
 import Decidable.Equality
 
+import Extra
+
 %default total
 
 public export
@@ -19,12 +21,6 @@ noSV Refl impossible
 
 
 decEq : (a, b : Base) -> Dec (a === b)
-
-rightHeavy : [] = x :: xs -> Void
-rightHeavy Refl impossible
-
-leftHeavy : x :: xs = [] -> Void
-leftHeavy Refl impossible
 
 decEqs : (as, bs : List (String, Base)) -> Dec (as === bs)
 
@@ -57,7 +53,7 @@ decEqs [] (x :: xs)
   = No rightHeavy
 decEqs (x :: xs) []
   = No leftHeavy
-decEqs ((lx,x) :: xs) ((ly,y) :: ys) with (decEq lx ly)
+decEqs ((lx,x) :: xs) ((ly,y) :: ys) with (Equality.decEq lx ly)
   decEqs ((lx,x) :: xs) ((ly,y) :: ys) | (No contra)
     = No $ \case Refl => contra Refl
 
