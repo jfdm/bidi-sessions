@@ -1,9 +1,5 @@
 module Example
 
-import Sessions.Types.Local
-import Sessions.Types.Local
-import Sessions.Types.Local.Merge.Synthesis
-import Sessions.Types.Local.Merge.Projection
 
 import Sessions.AST
 import Sessions.Elab
@@ -86,4 +82,32 @@ test2
                                    [ ("foo", "x",Stop)
                                   , ("baz", "x",Stop)]
        )))
+
+
+paperTerm : Synth.AST
+paperTerm
+  =  Loop
+     $ If (Switch True)
+          (Send 0 "This" (N 1)
+           $ Recv 0 (SUM [("Quit", NAT)])
+                         [ ("Quit", "x", Stop)])
+          (Send 0 "That" True
+           $ Recv 0 (SUM [("Loop", BOOL)])
+                         [ ("Loop", "x", Call 0)])
+
+paperType : Global
+paperType
+  = Rec
+    $ Choice 1 0
+      [ ("This", NAT,  Choice 0 1 [("Quit", NAT, End)])
+      , ("That", BOOL, Choice 0 1 [("Loop", BOOL, Call 0)])
+      ]
+
+paper : Session.AST
+paper
+  = Session
+    paperType
+    1
+    paperTerm
+
 -- [ EOF ]

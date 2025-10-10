@@ -8,6 +8,17 @@ import Data.SnocList.Elem
 
 %default total
 
+namespace Decidable
+
+  export
+  decide : b -> (a -> b) -> Dec a -> b
+  decide x f (Yes prf) = f prf
+  decide x f (No contra) = x
+
+  export
+  toMaybe : Dec a -> Maybe a
+  toMaybe = decide Nothing Just
+
 namespace String
 
   namespace Positive
