@@ -168,6 +168,4 @@ mutual
                 unique (Choice s yids r yidr xprf xxs) (Choice s yids r yidr xprf yys) | Refl | Refl | Refl | Refl | Refl with (uniques xxs yys)
                   unique (Choice s yids r yidr xprf xxs) (Choice s yids r yidr xprf yys) | Refl | Refl | Refl | Refl | Refl | Refl = Refl
 
-
-
 -- [ EOF ]

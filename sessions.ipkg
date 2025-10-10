@@ -21,6 +21,7 @@ modules = Extra
 
         , Sessions.Types.Global
         , Sessions.Types.Global.Projection
+        , Sessions.Types.Global.WellFormed
         -- Experiments May not compile
         --        , Sessions.Types.Local.Merge.Experimental
         --        , Sessions.Types.Local.Merge.General
@@ -38,7 +39,7 @@ modules = Extra
         , Sessions.Elab.Terms.Unique
 
         , Sessions.Elab.Terms
-
+        , Sessions.Elab.Sessions
         , Sessions.Elab
 
         , Example
