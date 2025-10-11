@@ -1,4 +1,4 @@
-module Sessions.Elab.Terms.Core
+module Sessions.Elab.Process.Core
 
 import Sessions.Types.Local
 import Sessions.Types.Local.Subset
@@ -7,6 +7,9 @@ import Sessions.AST
 
 import Sessions.Elab.Expr
 import Sessions.Elab.Local
+
+import Sessions.Terms.Expr
+import Sessions.Terms.Process
 
 %default total
 
@@ -141,5 +144,66 @@ mutual
             -> Synth rs fs ts tm tySyn
             -> tySyn === tyCheck
             -> Check rs fs ts tyCheck (Switch tm)
+
+
+namespace Convert
+
+  namespace Branches
+    export
+    toTerm : Branches.Synth rs fs ts tbs tms tys
+          -> Branches       rs fs (erase ts) tbs     tys
+
+  namespace Cases
+    export
+    toTerm : Cases.Synth rs fs ts tbs tms tys
+          -> Cases       rs fs (erase ts) tbs     tys
+
+  namespace Synth
+    export
+    toTerm : Synth   rs fs        ctxt  e ty
+          -> Process rs fs (erase ctxt)   ty
+
+  namespace Check
+    export
+    toTerm : Check   rs fs        ctxt  ty e
+          -> Process rs fs (erase ctxt) ty
+
+namespace Convert
+
+  namespace Branches
+    toTerm End = End
+    toTerm (Ext x y)
+      = Ext (toTerm x) (toTerm y)
+
+  namespace Cases
+    toTerm End = End
+    toTerm (Ext x y)
+      = Ext (toTerm x) (toTerm y)
+
+  namespace Synth
+    toTerm Stop = Stop
+    toTerm (Call n idx) = Call idx
+    toTerm (Loop cont) = Loop $ toTerm cont
+    toTerm (Send prf pe cont)
+      = Send prf (toTerm pe) (toTerm cont)
+
+    toTerm (Recv idx bs)
+      = Recv idx (toTerm bs)
+
+    toTerm (The x y) = toTerm y
+    toTerm (If cond tt ff prf)
+      = If (toTerm cond)
+           (toTerm tt)
+           (toTerm ff)
+           prf
+
+    toTerm (Match tm bs prf)
+      = Match (toTerm tm)
+              (toTerm bs)
+              prf
+
+  namespace Check
+    toTerm (Switch x Refl) = toTerm x
+
 
 -- [ EOF ]

@@ -1,4 +1,4 @@
-module Sessions.Elab.Terms.Unique
+module Sessions.Elab.Process.Unique
 
 import Sessions.Types.Local
 import Sessions.Types.Local.Subset
@@ -7,7 +7,7 @@ import Sessions.AST
 
 import Sessions.Elab.Expr
 import Sessions.Elab.Local
-import Sessions.Elab.Terms.Core
+import Sessions.Elab.Process.Core
 
 %default total
 

@@ -3,6 +3,7 @@ module Example
 
 import Sessions.AST
 import Sessions.Elab
+import Sessions.Terms
 
 %default total
 

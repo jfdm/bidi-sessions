@@ -28,17 +28,24 @@ modules = Extra
 
 
 
+        , Sessions.Terms.Expr
+        , Sessions.Terms.Process
+        , Sessions.Terms.Sessions
+        , Sessions.Terms
 
         , Sessions.AST
+
+
         , Sessions.Elab.Expr
         , Sessions.Elab.Local
         , Sessions.Elab.Global
 
-        , Sessions.Elab.Terms.Core
-        , Sessions.Elab.Terms.Proof
-        , Sessions.Elab.Terms.Unique
 
-        , Sessions.Elab.Terms
+        , Sessions.Elab.Process.Core
+        , Sessions.Elab.Process.Proof
+        , Sessions.Elab.Process.Unique
+
+        , Sessions.Elab.Process
         , Sessions.Elab.Sessions
         , Sessions.Elab
 

@@ -9,6 +9,7 @@ import Extra
 import Sessions.Types.Base
 import Sessions.Types.Common
 import Sessions.AST
+import Sessions.Terms.Expr
 
 %default total
 
@@ -20,7 +21,7 @@ mutual
       data Expr : SnocList (String,Base) -> Synth.Expr -> Base -> Type where
         True : Expr ts True BOOL
         False : Expr ts False BOOL
-        N : Expr ts (N n) NAT
+        N : (b : Nat) -> Expr ts (N n) NAT
         V : {v : String}
          -> Lookup.Elem (v,b) ts
          -> Expr ts (V v) b
@@ -49,7 +50,7 @@ namespace Synth
               -> Equal a b
   unique True True = Refl
   unique False False = Refl
-  unique N N = Refl
+  unique (N x) (N y) = Refl
   unique (V x) (V y) with (Lookup.unique x y)
     unique (V x) (V y) | Refl = Refl
   unique (The x) (The y) = Refl
@@ -112,7 +113,7 @@ namespace Expr
 
   synth ts True = Yes (BOOL ** True)
   synth ts False = Yes (BOOL ** False)
-  synth ts (N k) = Yes (NAT ** N)
+  synth ts (N k) = Yes (NAT ** N k)
   synth ts (The b tm) with (check ts b tm)
     synth ts (The b tm) | (Yes prf) = Yes (b ** The prf)
     synth ts (The b tm) | (No contra)
@@ -122,5 +123,36 @@ namespace Expr
     synth ts (V str) | (Yes (ty ** idx)) = Yes (ty ** V idx)
     synth ts (V str) | (No no)
         = No (unbound no)
+
+
+namespace Convert
+
+  namespace Synth
+    export
+    toTerm : Synth.Expr ctxt e ty
+          ->       Expr (erase ctxt) ty
+
+  namespace Check
+    export
+    toTerm : Check.Expr ctxt ty e
+          ->       Expr (erase ctxt) ty
+
+
+  namespace Synth
+
+    toTerm True = True
+    toTerm False = True
+    toTerm (N n) = N n
+    toTerm (V idx) = V (erase idx)
+    toTerm (The x) = Check.toTerm x
+
+
+  namespace Check
+    toTerm (Switch x Refl) = Synth.toTerm x
+    toTerm (Tag e idx Refl)
+      = Tag idx (toTerm e)
+
+
+
 
 -- [ EOF ]

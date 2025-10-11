@@ -6,6 +6,7 @@ import public Data.So
 import Data.SnocList
 import Data.SnocList.Elem
 
+
 %default total
 
 namespace Decidable
@@ -93,6 +94,10 @@ namespace List
         = No (\case Refl => contra Refl)
 
 namespace SnocList
+
+  public export
+  erase : SnocList (k,v) -> SnocList v
+  erase = map Builtin.snd
 
   namespace AtIndex
 
@@ -274,6 +279,13 @@ namespace SnocList
            -> (later   : Lookup.Elem (x,a) tesr)
                       -> Lookup.Elem (x,a) (tesr :< (y,b))
 
+    public export
+    erase : Lookup.Elem kv kvs
+         -> Elem (Builtin.snd kv) (erase kvs)
+    erase (Here Refl Refl)
+      = Here
+    erase (There _ later) with (erase later)
+      erase (There _ later) | prf = There prf
 
     public export
     data Equal : Lookup.Elem a xs
