@@ -1,5 +1,15 @@
 package sessions
 
+version = 2025.10.16
+license = "LICENSE"
+authors = "See CONTRIBUTORS"
+maintainers = "See CONTRIBUTORS"
+
+brief = "Typing a process calculus bidirectionally using multiparty session types."
+readme = "README.md"
+
+sourcedir = "src"
+
 modules = Extra
 
         , Sessions.Types.Base
@@ -50,3 +60,5 @@ modules = Extra
         , Sessions.Elab
 
         , Example
+
+-- [ EOF ]

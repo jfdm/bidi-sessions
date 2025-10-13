@@ -1,0 +1,53 @@
+#!/bin/env bash
+
+test ! -z $1 && set -x # Show commands if first arg is non-zero
+
+mkdir -p build/html
+mkdir -p build/latex
+
+echo "Testing for Dependencies"
+KATLA_EXE=$(which katla)
+test -x KATLA_EXE && echo "Katla not installed"
+
+PANDOC_EXE=$(which pandoc)
+test -x PANDOC_EXE && echo "Pandoc not installed"
+
+katla_run()
+{
+    test -z $2 && echo "missing ttm"
+    FOUT=$4
+    DOUT=${FOUT%/*} # equiv to dirname
+    mkdir -p "$DOUT"
+    echo "Generating $4"
+    $KATLA_EXE "$1" "$2" "$3" > "$4"
+}
+
+echo "Touching HTML Index file"
+INDEX="build/html/index.md"
+rm -rf ${INDEX}
+touch ${INDEX}
+
+
+find src -type f -iname "*.idr" -print0 |\
+    while IFS= read -r -d '' file; do
+        FILE_LOCAL=${file#src/} # remove prefix
+        FILE_ttm=${FILE_LOCAL%idr}ttm
+        FILE_html=${FILE_LOCAL%idr}html
+        FILE_tex=${FILE_LOCAL%idr}tex
+        echo "+ [${FILE_LOCAL}](${FILE_html})" >> ${INDEX}
+        katla_run html "./${file}" ./build/ttc/*/"${FILE_ttm}" "./build/html/${FILE_html}"
+        katla_run latex "./${file}" ./build/ttc/*/"${FILE_ttm}" "./build/latex/${FILE_tex}"
+    done
+
+TODAY=`date +%Y-%m-%d`
+
+echo "Generating HTML Index"
+${PANDOC_EXE} --standalone \
+              --to html5 \
+              --output ${INDEX%md}html \
+              --metadata title="Index of Project Sources" \
+              --metadata author="See CONTRIBUTORS" \
+              --metadata date="${TODAY}" \
+              ${INDEX}
+
+# -- [ EOF ]
