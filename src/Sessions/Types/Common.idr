@@ -7,6 +7,8 @@ import public Data.SnocList.Elem
 
 import public Extra
 
+import public Sessions.Types.Base
+
 %default total
 
 
@@ -100,3 +102,53 @@ namespace Fix
   public export
   Context : Type
   Context = SnocList Fix
+
+
+namespace Branch
+
+  public export
+  data Branch : (ktype : Role.Context -> Fix.Context -> Type)
+             -> (rs    : Role.Context)
+             -> (fs    : Fix.Context)
+                      -> Type
+    where
+      B : (l : String)
+       -> (t : Base)
+       -> (k : kont rs fs)
+            -> Branch kont rs fs
+
+  export
+  decEq : (f : (x,y : how rs fs) -> Dec (x === y))
+       -> (x,y : Branch how rs fs)
+              -> Dec (x === y)
+  decEq f (B lx tx kx) (B ly ty ky) with (Equality.decEq lx ly)
+    decEq f (B lx tx kx) (B lx ty ky) | (Yes Refl) with (decEq tx ty)
+      decEq f (B lx tx kx) (B lx tx ky) | (Yes Refl) | (Yes Refl) with (f kx ky)
+        decEq f (B lx tx kx) (B lx tx kx) | (Yes Refl) | (Yes Refl) | (Yes Refl)
+          = Yes Refl
+        decEq f (B lx tx kx) (B lx tx ky) | (Yes Refl) | (Yes Refl) | (No no)
+          = No $ \case Refl => no Refl
+      decEq f (B lx tx kx) (B lx ty ky) | (Yes Refl) | (No no)
+        = No $ \case Refl => no Refl
+    decEq f (B lx tx kx) (B ly ty ky) | (No no)
+      = No $ \case Refl => no Refl
+
+namespace Branches
+
+  export
+  decEq : (f   : (x,y : how rs fs) -> Dec (x === y))
+       -> (x,y : List $ Branch how rs fs)
+              -> Dec (x === y)
+  decEq _ [] [] = Yes Refl
+  decEq _ [] (x :: xs)
+    = No rightHeavy
+  decEq _ (x :: xs) []
+    = No leftHeavy
+  decEq f (x :: xs) (y :: ys) with (decEq f x y)
+    decEq f (x :: xs) (x :: ys) | (Yes Refl) with (decEq f xs ys)
+      decEq f (x :: xs) (x :: xs) | (Yes Refl) | (Yes Refl)
+        = Yes Refl
+      decEq _ (x :: xs) (x :: ys) | (Yes Refl) | (No no)
+        = No $ \case Refl => no Refl
+    decEq _ (x :: xs) (y :: ys) | (No no)
+      = No $ \case Refl => no Refl

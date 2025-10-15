@@ -68,4 +68,5 @@ clobber: clean
 	find . -iname "*~" -delete
 #	${RM} -rf build/ artefact-staging/
 #	${RM} ${PROJECT}.tar.gz
-	make -C results clobber
+
+# -- [ EOF ]
