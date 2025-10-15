@@ -13,7 +13,7 @@ import Sessions.Types.Local
 
 namespace Branch
   public export
-  data Subset : (how : (a,b : Local rs fs) -> Type) -> (x,y : Branch rs fs) -> Type where
+  data Subset : (how : (a,b : Local rs fs) -> Type) -> (x,y : Local.Branch rs fs) -> Type where
     B : (lx = ly)
      -> (tx = ty)
      -> how kx ky

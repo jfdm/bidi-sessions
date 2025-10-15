@@ -170,6 +170,14 @@ namespace SnocList
       unique (ThereNot x) (ThereNot y) with (unique x y)
         unique (ThereNot x) (ThereNot x) | Refl = Refl
 
+      export
+      decEq : (x : Not.EqualNot a b)
+           -> (y : Not.EqualNot a b)
+           -> x === y
+      decEq LeftH LeftH = Refl
+      decEq RightH RightH = Refl
+      decEq (ThereNot x) (ThereNot y) with (decEq x y)
+        decEq (ThereNot x) (ThereNot x) | Refl = Refl
     export
     toVoid : {0 a : AtIndex x xs n}
           -> {0 b : AtIndex x xs n}

@@ -10,6 +10,7 @@ import public Extra
 import public Sessions.Types.Base
 import public Sessions.Types.Common
 
+{-
 public export
 data Global : Role.Context
            -> Fix.Context
@@ -27,6 +28,12 @@ data Global : Role.Context
           -> EqualNot x y
           -> List (Branch Global rs fs)
           -> Global rs fs
+-}
+public export
+Global : Role.Context
+      -> Fix.Context
+      -> Type
+Global = Protocol GLOBAL
 
 public export
 Branch : Role.Context

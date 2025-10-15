@@ -1,5 +1,6 @@
 module Sessions.Elab.Sessions
 
+import public Sessions.Types.Common
 import public Sessions.Types.Local
 import        Sessions.Types.Local.Subset
 
@@ -12,20 +13,21 @@ import Sessions.AST
 import public Sessions.Elab.Expr
 import public Sessions.Elab.Local
 import public Sessions.Elab.Global
-
-import public Sessions.Elab.Terms
+import public Sessions.Elab.Process
 
 import Sessions.Terms.Sessions
 
 %default total
 
 public export
-data SynAck : (rs : SnocList Role)
+data SynAck : (rs : Role.Context)
            -> (tm : Session.AST)
            -> (l  : Local rs Lin)
                  -> Type
   where
-    Session : {tyProj,tyG,tySyn,p : _}
+    Session : {p : _}
+           -> {tyProj,tySyn : Protocol LOCAL rs Lin}
+           -> {tyG   : Protocol GLOBAL rs Lin}
            -> Global rs Lin tmty tyG
            -> WellFormed rs tyG
            -> (whom : AtIndex p rs n)
@@ -80,7 +82,7 @@ check rs (Session g whom tm) with (synth rs Lin g)
         check rs (Session g whom tm) | (Yes (gty ** gtm)) | (Yes pW) | (Yes (w ** widx)) | (No no)
           = No (projectFails widx gtm no)
 
-        check rs (Session g whom tm) | (Yes (gty ** gtm)) | (Yes pW) | (Yes (w ** widx)) | (Yes (pty ** pP)) with (synth rs Lin Lin tm)
+        check rs (Session g whom tm) | (Yes (gty ** gtm)) | (Yes pW) | (Yes (w ** widx)) | (Yes (pty ** pP)) with (Process.synth rs Lin Lin tm)
           check rs (Session g whom tm) | (Yes (gty ** gtm)) | (Yes pW) | (Yes (w ** widx)) | (Yes (pty ** pP)) | (No no)
             = No $ \case (_ ** Session _ _ _ _ pS _) => no (_ ** pS)
 
