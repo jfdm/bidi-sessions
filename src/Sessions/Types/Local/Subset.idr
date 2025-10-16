@@ -110,8 +110,6 @@ subsetMSR _ impossible
 subsetMRS: (Subset (Comm RECV w idx) (Comm SEND y s)) -> Void
 subsetMRS _ impossible
 
-
-
 mutual
   namespace Branch
     export

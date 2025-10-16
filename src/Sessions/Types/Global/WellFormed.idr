@@ -15,51 +15,51 @@ import Sessions.Types.Global.Projection
 
 
 public export
-data All : (g  : Global rs Lin)
+data SomeProject : (g  : Global rs Lin)
                -> (xs : Role.Context)
                      -> Type
   where
-    Last : All g Lin
+    Last : SomeProject g Lin
 
     Keep : {n : _}
         -> (idx : AtIndex r rs n)
         -> Project idx g l
-        -> All g xs
-        -> All g (xs :< r)
+        -> SomeProject g xs
+        -> SomeProject g (xs :< r)
 
 
     Skip : {n : _}
         -> (idx : AtIndex r rs n)
         -> (DPair (Local rs Lin) (Project idx g) -> Void)
-        -> All g xs
-        -> All g (xs :< r)
+        -> SomeProject g xs
+        -> SomeProject g (xs :< r)
 
 
-all : {rs : Role.Context}
-  -> (g : Global rs Lin)
-  -> (xs : Role.Context)
-       -> Dec (All g xs)
-all g [<]
+someProject : {rs : Role.Context}
+           -> (g : Global rs Lin)
+           -> (xs : Role.Context)
+                  -> Dec (SomeProject g xs)
+someProject g [<]
   = Yes Last
 
-all g (sx :< x) with (lookup rs x)
-  all g (sx :< x) | (Yes (n ** idx)) with (project idx g)
-    all g (sx :< x) | (Yes (n ** idx)) | (Yes (l ** prf)) with (all g sx)
-      all g (sx :< x) | (Yes (n ** idx)) | (Yes (l ** p)) | (Yes ps)
+someProject g (sx :< x) with (lookup rs x)
+  someProject g (sx :< x) | (Yes (n ** idx)) with (project idx g)
+    someProject g (sx :< x) | (Yes (n ** idx)) | (Yes (l ** prf)) with (someProject g sx)
+      someProject g (sx :< x) | (Yes (n ** idx)) | (Yes (l ** p)) | (Yes ps)
         = Yes (Keep idx p ps)
-      all g (sx :< x) | (Yes (n ** idx)) | (Yes (l ** p)) | (No no)
+      someProject g (sx :< x) | (Yes (n ** idx)) | (Yes (l ** p)) | (No no)
         = No (\case (Keep y z w) => no w
                     (Skip y f z) => no z)
 
-    all g (sx :< x) | (Yes (n ** idx)) | (No noH) with (all g sx)
-      all g (sx :< x) | (Yes (n ** idx)) | (No noH) | (Yes prf)
+    someProject g (sx :< x) | (Yes (n ** idx)) | (No noH) with (someProject g sx)
+      someProject g (sx :< x) | (Yes (n ** idx)) | (No noH) | (Yes prf)
         = Yes $ Skip idx noH prf
 
-      all g (sx :< x) | (Yes (n ** idx)) | (No noH) | (No no)
+      someProject g (sx :< x) | (Yes (n ** idx)) | (No noH) | (No no)
         = No $ \case (Keep y z w) => no w
                      (Skip y f z) => no z
 
-  all g (sx :< x) | (No no)
+  someProject g (sx :< x) | (No no)
     = No $ \case (Keep idx y z) => no (_ ** idx)
                  (Skip idx f y) => no (_ ** idx)
 
@@ -68,13 +68,13 @@ data WellFormed : (rs : Role.Context)
                -> (g  : Global rs Lin)
                      -> Type
   where
-    WF : All g rs -> WellFormed rs g
+    WF : SomeProject g rs -> WellFormed rs g
 
 export
 wellformed : {rs : Role.Context}
           -> (g  : Global rs Lin)
                 -> Dec (WellFormed rs g)
-wellformed {rs} g with (all g rs)
+wellformed {rs} g with (someProject g rs)
   wellformed {rs} g | (Yes prf)
     = Yes (WF prf)
   wellformed {rs} g | (No no)

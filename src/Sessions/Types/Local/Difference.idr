@@ -1,5 +1,7 @@
 module Sessions.Types.Local.Difference
 
+import Extra
+
 import Decidable.Equality
 
 import Data.SnocList
@@ -12,24 +14,17 @@ import Sessions.Types.Local
 namespace Branch
 
   public export
-  data Diff : (x,y : Branch rs fs)
-           -> Type
-    where
-      D : Not (lx = ly)
-       -> Diff (B lx tx kx)
-               (B ly ty ky)
-
-
-  areSame : Diff (B lx _ _) (B lx _ _) -> Void
-  areSame (D f) = f Refl
+  Diff : (x,y : Branch rs fs) -> Type
+  Diff (B lx tx kx)
+       (B ly ty ky) = EqualNot lx ly
 
   export
   diff : (x,y : Branch rs fs) -> Dec (Diff x y)
-  diff (B lx _ _) (B ly _ _) with (Equality.decEq lx ly)
-    diff (B lx _ _) (B lx _ _) | (Yes Refl) = No areSame
-    diff (B lx _ _) (B ly _ _) | (No contra)
-      = Yes (D contra)
-
+  diff (B lx _ _) (B ly _ _) with (Positive.decEq lx ly)
+    diff (B lx _ _) (B ly _ _) | (Left prf) = Yes prf
+    diff (B lx _ _) (B lx _ _) | (Right Refl)
+      = No $ \case pat => case toVoid Refl pat of
+                               f => f Refl
 
 namespace Branches
 
